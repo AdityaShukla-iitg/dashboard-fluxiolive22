@@ -46,6 +46,7 @@ export default function DashboardClient({
   const [copiedLink, setCopiedLink] = useState(false);
   const [revisionItem, setRevisionItem] = useState<ContentItem | null>(null);
   const [expandedCaptions, setExpandedCaptions] = useState<Record<string, boolean>>({});
+  const [copiedCaptions, setCopiedCaptions] = useState<Record<string, boolean>>({});
   const [playingReels, setPlayingReels] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -79,15 +80,12 @@ export default function DashboardClient({
     }
   };
 
-  const handleCopyCaption = async (text: string, e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleCopyCaption = async (id: string, text: string) => {
+    if (!text) return;
     await navigator.clipboard.writeText(text);
-    const btn = e.currentTarget;
-    const originalText = btn.innerText;
-    btn.innerText = "COPIED";
-    btn.classList.add("text-brand-green-light");
+    setCopiedCaptions((prev) => ({ ...prev, [id]: true }));
     setTimeout(() => {
-      btn.innerText = originalText;
-      btn.classList.remove("text-brand-green-light");
+      setCopiedCaptions((prev) => ({ ...prev, [id]: false }));
     }, 2000);
   };
 
@@ -508,10 +506,22 @@ export default function DashboardClient({
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-xs font-mono uppercase text-zinc-500">Caption</span>
                             <button
-                              onClick={(e) => handleCopyCaption(item.caption, e)}
-                              className="text-xs font-mono uppercase text-brand-green hover:text-brand-green-light py-1 px-2 -mr-2 transition-colors flex items-center gap-1 min-h-[32px]"
+                              onClick={() => handleCopyCaption(item._id, item.caption || "")}
+                              className={`text-xs font-mono uppercase py-1 px-2.5 rounded transition-all flex items-center gap-1.5 border min-h-[32px] ${
+                                copiedCaptions[item._id]
+                                  ? "bg-emerald-950/80 border-emerald-500 text-emerald-400 font-bold"
+                                  : "bg-zinc-900 border-zinc-700 text-zinc-200 hover:text-white hover:border-zinc-500 hover:bg-zinc-800"
+                              }`}
                             >
-                              <Copy className="w-3 h-3" /> Copy
+                              {copiedCaptions[item._id] ? (
+                                <>
+                                  <Check className="w-3.5 h-3.5 text-emerald-400" /> Copied
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3.5 h-3.5 text-zinc-300" /> Copy
+                                </>
+                              )}
                             </button>
                           </div>
                           <div className="bg-black p-3 sm:p-4 border border-zinc-800 font-sans text-xs sm:text-sm text-zinc-300 leading-relaxed flex-grow">
@@ -521,7 +531,7 @@ export default function DashboardClient({
                               {item.caption && item.caption.length > 80 && (
                                 <button
                                   onClick={() => setExpandedCaptions(prev => ({...prev, [item._id]: !prev[item._id]}))}
-                                  className="text-brand-green hover:text-brand-green-light font-mono text-[10px] uppercase mt-2 tracking-widest"
+                                  className="text-emerald-400 hover:text-emerald-300 font-mono text-[10px] uppercase mt-2 tracking-widest font-medium transition-colors"
                                 >
                                   {expandedCaptions[item._id] ? "See Less" : "See More"}
                                 </button>
@@ -540,7 +550,7 @@ export default function DashboardClient({
                             />
                             <span
                               className={`text-xs font-mono uppercase tracking-widest transition-colors ${
-                                item.isPosted ? "text-brand-green-light line-through" : "text-zinc-400 group-hover:text-zinc-200"
+                                item.isPosted ? "text-emerald-400 line-through" : "text-zinc-400 group-hover:text-zinc-200"
                               }`}
                             >
                               {item.isPosted ? "Posted to Socials" : "Mark as posted"}
