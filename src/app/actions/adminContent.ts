@@ -52,13 +52,21 @@ export async function upsertContentItem(formData: FormData) {
     };
   }
 
-  let result;
-  if (_id) {
-    result = await client.patch(_id).set(doc).commit();
-  } else {
-    result = await client.create(doc as Parameters<typeof client.create>[0]);
-  }
+      let result;
+    if (_id) {
+      result = await client.patch(_id).set(doc).commit();
+    } else {
+      result = await client.create(doc as Parameters<typeof client.create>[0]);
+    }
+  
+    const resolvedDoc = await client.fetch(`*[_id == $id][0] {
+      ...,
+      thumbnail {
+        asset-> { url }
+      }
+    }`, { id: result._id });
 
-  revalidatePath("/admin/content");
-  return { success: true, item: result };
+    revalidatePath("/admin/content");
+    revalidatePath("/[slug]/dashboard", "page");
+    return { success: true, item: resolvedDoc };
 }
