@@ -10,6 +10,25 @@ export async function toggleClientStatus(clientId: string, currentStatus: string
   revalidatePath("/admin/clients");
 }
 
+export async function deleteClient(clientId: string) {
+  try {
+    // Delete any dependent content items or revision requests first
+    const relatedIds = await client.fetch<string[]>(
+      `*[_type in ["contentItem", "revisionRequest"] && client._ref == $clientId]._id`,
+      { clientId }
+    );
+    for (const id of relatedIds) {
+      await client.delete(id);
+    }
+    await client.delete(clientId);
+    revalidatePath("/admin/clients");
+    return { success: true };
+  } catch (err) {
+    console.error("Failed to delete client:", err);
+    return { error: "Failed to delete client." };
+  }
+}
+
 export async function upsertClient(formData: FormData) {
   const _id = formData.get("_id") as string;
   const name = formData.get("name") as string;

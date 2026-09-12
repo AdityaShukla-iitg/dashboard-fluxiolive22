@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { ClientDoc } from "@/lib/sanity";
-import { toggleClientStatus, upsertClient } from "@/app/actions/adminClients";
-import { Plus, Edit2, PauseCircle, PlayCircle, X } from "lucide-react";
+import { toggleClientStatus, upsertClient, deleteClient } from "@/app/actions/adminClients";
+import { Plus, Edit2, PauseCircle, PlayCircle, X, Trash2 } from "lucide-react";
 
 export default function ClientManager({ initialClients }: { initialClients: ClientDoc[] }) {
   const [clients, setClients] = useState(initialClients);
@@ -15,6 +15,14 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
     // Optimistic update
     setClients(prev => prev.map(c => c._id === id ? { ...c, status: currentStatus === "active" ? "paused" : "active" } : c));
     await toggleClientStatus(id, currentStatus);
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to permanently delete "${name}" and all associated deliverables?`)) {
+      return;
+    }
+    setClients(prev => prev.filter(c => c._id !== id));
+    await deleteClient(id);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -69,6 +77,9 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
               </button>
               <button onClick={() => openEdit(c)} className="p-2 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white transition-colors" title="Edit">
                 <Edit2 className="w-4 h-4" />
+              </button>
+              <button onClick={() => handleDelete(c._id, c.name)} className="p-2 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-brand-red transition-colors" title="Delete Client">
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           </div>
