@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { loginRoot } from "@/app/actions/rootAuth";
+import { Eye, EyeOff } from "lucide-react";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -18,6 +20,7 @@ function SubmitButton() {
 
 export default function Home() {
   const [state, formAction] = useFormState(loginRoot, null);
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-black">
@@ -48,13 +51,24 @@ export default function Home() {
             <label className="block text-[11px] font-mono uppercase tracking-widest text-zinc-500">
               Password
             </label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              required
-              className="w-full bg-zinc-900 border-zinc-800 h-12 sm:h-14 px-4 uppercase font-sans tracking-widest text-base sm:text-sm placeholder:text-zinc-600 focus:border-brand-green focus:ring-1 focus:ring-brand-green"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+                required
+                className="w-full bg-zinc-900 border-zinc-800 h-12 sm:h-14 pl-4 pr-12 font-sans tracking-widest text-base sm:text-sm placeholder:text-zinc-600 focus:border-brand-green focus:ring-1 focus:ring-brand-green"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-0 top-0 bottom-0 px-3.5 flex items-center justify-center text-zinc-500 hover:text-white transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
 
           {state?.error && (

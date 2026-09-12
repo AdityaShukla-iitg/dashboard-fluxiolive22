@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ClientDoc } from "@/lib/sanity";
 import { toggleClientStatus, upsertClient, deleteClient } from "@/app/actions/adminClients";
-import { Plus, Edit2, PauseCircle, PlayCircle, X, Trash2 } from "lucide-react";
+import { Plus, Edit2, PauseCircle, PlayCircle, X, Trash2, Eye, EyeOff } from "lucide-react";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 import ToastNotification, { ToastMessage } from "@/components/ToastNotification";
 
@@ -15,6 +15,7 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
   const [modalOpen, setModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<ClientDoc | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showModalPassword, setShowModalPassword] = useState(false);
 
   // Delete modal state
   const [clientToDelete, setClientToDelete] = useState<ClientDoc | null>(null);
@@ -253,7 +254,23 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-mono uppercase text-zinc-400">Password {editingClient ? "(leave blank to keep)" : ""}</label>
-                  <input name="password" type="password" required={!editingClient} className="w-full bg-zinc-900 border border-zinc-800 p-3 sm:p-2 font-sans text-base sm:text-sm text-white" />
+                  <div className="relative">
+                    <input 
+                      name="password" 
+                      type={showModalPassword ? "text" : "password"} 
+                      required={!editingClient} 
+                      className="w-full bg-zinc-900 border border-zinc-800 p-3 sm:p-2 pr-10 font-sans text-base sm:text-sm text-white" 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowModalPassword(!showModalPassword)}
+                      className="absolute right-0 top-0 bottom-0 px-3 flex items-center justify-center text-zinc-500 hover:text-white transition-colors"
+                      aria-label={showModalPassword ? "Hide password" : "Show password"}
+                      tabIndex={-1}
+                    >
+                      {showModalPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
