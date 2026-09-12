@@ -129,7 +129,7 @@ export default function DashboardClient({
     <div className="w-full overflow-x-hidden">
       {/* Responsive Header for Mobile and Desktop */}
       <header className="border-b border-zinc-900 bg-black sticky top-0 z-40 p-4 md:px-8 md:py-6">
-        <div className="w-full">
+        <div className="max-w-[1400px] mx-auto">
           {/* Smartphone Header View (< md) */}
           <div className="md:hidden space-y-4">
             <div className="flex items-center justify-between gap-3">
@@ -257,7 +257,7 @@ export default function DashboardClient({
       </header>
 
       {/* Main Content Area */}
-      <main className="w-full p-4 md:px-8 mt-8">
+      <main className="max-w-[1400px] mx-auto p-4 md:px-8 mt-8">
         {/* Month Selector */}
         {months.length > 0 && (
           <div className="mb-12 flex items-center justify-between">
@@ -289,7 +289,7 @@ export default function DashboardClient({
                 <div key={i} className="relative pl-4 md:pl-8 border-l border-zinc-800">
                   <div className="absolute w-2 h-2 bg-zinc-800 -left-[4px] top-2" />
                   <div className="h-8 bg-zinc-800 w-48 mb-8" />
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {[1, 2].map((j) => (
                       <div key={j} className="border border-zinc-800 flex flex-col bg-zinc-900/50">
                         <div className="w-full aspect-[4/5] bg-zinc-800" />
@@ -323,7 +323,7 @@ export default function DashboardClient({
                 <span className="text-xs font-mono text-zinc-600 bg-zinc-900 px-2 py-1">[ 0{dayIndex + 1} ]</span>
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {groupedByDate[date].map((item) => {
                   const hasOpenRevision = item.activeRevision?.status === "open";
                   const hasResolvedRevision = item.activeRevision?.status === "resolved";
