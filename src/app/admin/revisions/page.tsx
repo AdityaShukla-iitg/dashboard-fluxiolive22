@@ -9,9 +9,31 @@ export default async function AdminRevisions() {
     message,
     status,
     createdAt,
-    client->{name},
-    contentItem->{driveLink},
-    attachmentAsset{asset->{url}}
+    client->{
+      _id,
+      name,
+      slug
+    },
+    contentItem->{
+      _id,
+      assetType,
+      date,
+      month,
+      caption,
+      driveLink,
+      thumbnailLink,
+      thumbnail {
+        asset-> {
+          url
+        }
+      }
+    },
+    attachmentAsset{
+      asset->{
+        url,
+        originalFilename
+      }
+    }
   }`;
   
   const revisions = await client.fetch(query);
