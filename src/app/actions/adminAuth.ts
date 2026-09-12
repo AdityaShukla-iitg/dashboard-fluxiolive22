@@ -1,4 +1,5 @@
-﻿import { createAdminSession } from "@/lib/auth";
+﻿"use server";
+import { createAdminSession } from "@/lib/auth";
 
 export interface AuthState {
   error?: string;

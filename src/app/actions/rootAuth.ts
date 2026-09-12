@@ -1,4 +1,5 @@
-﻿import { createClientSession, createAdminSession } from "@/lib/auth";
+﻿"use server";
+import { createClientSession, createAdminSession } from "@/lib/auth";
 import bcrypt from "bcrypt";
 import { client, ClientDoc } from "@/lib/sanity";
 
