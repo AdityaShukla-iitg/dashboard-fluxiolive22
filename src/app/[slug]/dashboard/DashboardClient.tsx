@@ -129,7 +129,7 @@ export default function DashboardClient({
     <div className="w-full overflow-x-hidden">
       {/* Responsive Header for Mobile and Desktop */}
       <header className="border-b border-zinc-900 bg-black sticky top-0 z-40 p-4 md:px-8 md:py-6">
-        <div className="max-w-[1400px] mx-auto">
+        <div className="max-w-[1300px] mx-auto">
           {/* Smartphone Header View (< md) */}
           <div className="md:hidden space-y-4">
             <div className="flex items-center justify-between gap-3">
@@ -257,7 +257,7 @@ export default function DashboardClient({
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-[1400px] mx-auto p-4 md:px-8 mt-8">
+      <main className="max-w-[1300px] mx-auto p-4 md:px-8 mt-8">
         {/* Month Selector */}
         {months.length > 0 && (
           <div className="mb-12 flex items-center justify-between">
