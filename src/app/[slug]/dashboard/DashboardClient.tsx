@@ -33,13 +33,14 @@ export default function DashboardClient({
   logoutAction,
 }: DashboardClientProps) {
   const [content, setContent] = useState<ContentItem[]>(initialContent);
-  const months = Array.from(
+  const rawMonths = Array.from(
     new Set(
       content
         .map((c) => c.month)
         .filter((m): m is string => Boolean(m && typeof m === "string"))
     )
   ).sort().reverse();
+  const months = ["All Time", ...rawMonths];
   const [selectedMonth, setSelectedMonth] = useState(months[0] || "");
   const [isClient, setIsClient] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -51,7 +52,7 @@ export default function DashboardClient({
     setIsClient(true);
   }, []);
 
-  const monthContent = content.filter((c) => c.month === selectedMonth);
+  const monthContent = selectedMonth === "All Time" ? content : content.filter((c) => c.month === selectedMonth);
 
   // Calculate delivered so far this month
   const postersDelivered = monthContent.filter((c) => c.assetType === "poster").length;
@@ -282,7 +283,37 @@ export default function DashboardClient({
         )}
 
         {/* Deliverables Grid */}
-        <div className={`space-y-16 transition-opacity duration-700 ${isClient ? "opacity-100" : "opacity-0"}`}>
+        {!isClient ? (
+            <div className="space-y-16 animate-pulse mt-8">
+              {[1].map((i) => (
+                <div key={i} className="relative pl-4 md:pl-8 border-l border-zinc-800">
+                  <div className="absolute w-2 h-2 bg-zinc-800 -left-[4px] top-2" />
+                  <div className="h-8 bg-zinc-800 w-48 mb-8" />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {[1, 2].map((j) => (
+                      <div key={j} className="border border-zinc-800 flex flex-col bg-zinc-900/50">
+                        <div className="w-full aspect-[4/5] bg-zinc-800" />
+                        <div className="p-4 space-y-4">
+                          <div className="flex justify-between">
+                            <div className="w-24 h-4 bg-zinc-800" />
+                            <div className="flex gap-2">
+                              <div className="w-8 h-8 bg-zinc-800" />
+                              <div className="w-8 h-8 bg-zinc-800" />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="w-full h-4 bg-zinc-800" />
+                            <div className="w-3/4 h-4 bg-zinc-800" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+        ) : (
+        <div className="space-y-16 transition-opacity duration-700 opacity-100">
           {dates.map((date, dayIndex) => (
             <div key={date} className="relative pl-4 md:pl-8 border-l border-zinc-800">
               <div className="absolute w-2 h-2 bg-brand-red -left-[4px] top-2" />
@@ -500,6 +531,7 @@ export default function DashboardClient({
             </div>
           ))}
         </div>
+        )}
       </main>
 
       {revisionItem && (
