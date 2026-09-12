@@ -56,12 +56,16 @@ export async function submitRevision(formData: FormData) {
     }
 
     if (process.env.RESEND_API_KEY) {
-      await resend.emails.send({
-        from: "Portal <portal@fluxio.live>",
-        to: "adityashukla@fluxio.live",
-        subject: `REVISION: ${clientName}`,
-        text: `Client requested a revision.\n\nAsset Drive Link: ${driveLink}\n\nMessage:\n${message}\n\nAttachment: ${attachmentUrl}`,
-      });
+      try {
+        await resend.emails.send({
+          from: process.env.RESEND_FROM_EMAIL || "Fluxio Portal <onboarding@resend.dev>",
+          to: process.env.RESEND_TO_EMAIL || "adityashukla@fluxio.live",
+          subject: `REVISION: ${clientName}`,
+          text: `Client requested a revision.\n\nAsset Drive Link: ${driveLink}\n\nMessage:\n${message}\n\nAttachment: ${attachmentUrl}`,
+        });
+      } catch (emailErr) {
+        console.error("Resend email send error:", emailErr);
+      }
     } else {
       console.log("No RESEND_API_KEY, skipping email send.", { message, driveLink });
     }
