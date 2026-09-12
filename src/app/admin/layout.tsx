@@ -1,7 +1,7 @@
 import { getSession, destroySession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, FileImage, MessageSquare, LogOut } from "lucide-react";
+import { Users, FileImage, MessageSquare, LogOut, BarChart3 } from "lucide-react";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -43,6 +43,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             className="flex items-center gap-3 px-4 py-3 text-sm font-sans uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
           >
             <MessageSquare className="w-4 h-4" /> Revisions
+          </Link>
+          <Link
+            href="/admin/dashboard"
+            className="flex items-center gap-3 px-4 py-3 text-sm font-sans uppercase tracking-widest text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+          >
+            <BarChart3 className="w-4 h-4" /> Statistics
           </Link>
         </nav>
 
@@ -98,6 +104,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         >
           <MessageSquare className="w-5 h-5" />
           <span>Revisions</span>
+        </Link>
+        <Link
+          href="/admin/dashboard"
+          className="flex flex-col items-center gap-1 py-1 px-3 text-[10px] font-mono uppercase tracking-wider text-zinc-400 hover:text-white focus:text-white transition-colors"
+        >
+          <BarChart3 className="w-5 h-5" />
+          <span>Stats</span>
         </Link>
       </nav>
     </div>
