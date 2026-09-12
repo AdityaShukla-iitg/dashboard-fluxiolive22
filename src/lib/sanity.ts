@@ -25,13 +25,22 @@ export interface ClientDoc {
 
 export interface ContentItem {
   _id: string;
+  _createdAt?: string;
   client?: { _ref: string; _type?: string };
   month: string;
   date: string;
   assetType: "poster" | "reel";
   driveLink: string;
   thumbnailLink?: string;
+  thumbnail?: { asset?: { url?: string } };
   caption: string;
+  isPosted?: boolean;
+  activeRevision?: {
+    _id: string;
+    status: "open" | "resolved";
+    message: string;
+    createdAt: string;
+  };
 }
 
 export interface RevisionRequest {

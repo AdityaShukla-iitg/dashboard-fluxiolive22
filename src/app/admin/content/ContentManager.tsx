@@ -75,8 +75,16 @@ export default function ContentManager({
         {filteredContent.map(item => (
           <div key={item._id} className="bg-zinc-900 border border-zinc-800 flex flex-col">
             <div className="aspect-video w-full bg-zinc-950 border-b border-zinc-800 relative">
-              {item.thumbnailLink && (
-                <img src={item.thumbnailLink} alt="Thumb" className="w-full h-full object-cover opacity-80" />
+              {(item.thumbnail?.asset?.url || item.thumbnailLink) ? (
+                <img 
+                  src={item.thumbnail?.asset?.url || item.thumbnailLink} 
+                  alt="Thumb" 
+                  className="w-full h-full object-cover opacity-80" 
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-zinc-700 font-mono text-xs uppercase tracking-widest">
+                  No Preview
+                </div>
               )}
               <div className="absolute top-2 right-2 bg-black px-2 py-1 text-[10px] font-mono uppercase border border-zinc-800">
                 {item.assetType}
@@ -144,8 +152,18 @@ export default function ContentManager({
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-mono uppercase text-zinc-400">Thumbnail Link (Optional)</label>
-                <input name="thumbnailLink" type="url" defaultValue={editingItem?.thumbnailLink} className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-sm text-white" />
+                <label className="text-xs font-mono uppercase text-zinc-400">Upload Thumbnail Image (Sanity CDN)</label>
+                <input 
+                  type="file" 
+                  name="thumbnailFile" 
+                  accept="image/*" 
+                  className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-xs text-zinc-300 file:mr-4 file:py-1 file:px-3 file:border-0 file:text-xs file:font-mono file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-mono uppercase text-zinc-400">Or External Thumbnail Link (Fallback)</label>
+                <input name="thumbnailLink" type="url" defaultValue={editingItem?.thumbnailLink} className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-sm text-white" placeholder="https://..." />
               </div>
 
               <div className="space-y-1">

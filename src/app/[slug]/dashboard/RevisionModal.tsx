@@ -8,10 +8,12 @@ import { X } from "lucide-react";
 export default function RevisionModal({ 
   item, 
   clientId,
+  clientName,
   onClose 
 }: { 
   item: ContentItem; 
   clientId: string;
+  clientName: string;
   onClose: () => void; 
 }) {
   const [loading, setLoading] = useState(false);
@@ -27,7 +29,7 @@ export default function RevisionModal({
     formData.append("clientId", clientId);
     formData.append("contentItemId", item._id);
     formData.append("driveLink", item.driveLink);
-    formData.append("clientName", "Client"); // Ideally passed down, but acceptable
+    formData.append("clientName", clientName);
 
     const res = await submitRevision(formData);
     

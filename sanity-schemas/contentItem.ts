@@ -15,7 +15,9 @@ export const contentItemType = defineType({
       options: { list: ["poster", "reel"] }
     }),
     defineField({ name: "driveLink", title: "Drive Link", type: "url" }),
-    defineField({ name: "thumbnailLink", title: "Thumbnail Link", type: "url" }),
-    defineField({ name: "caption", title: "Caption", type: "text" })
+    defineField({ name: "thumbnail", title: "Thumbnail Image", type: "image", options: { hotspot: true } }),
+    defineField({ name: "thumbnailLink", title: "Thumbnail Link (External fallback)", type: "url" }),
+    defineField({ name: "caption", title: "Caption", type: "text" }),
+    defineField({ name: "isPosted", title: "Marked as Posted", type: "boolean", initialValue: false })
   ]
 });

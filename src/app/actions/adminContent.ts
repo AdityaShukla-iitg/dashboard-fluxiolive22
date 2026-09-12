@@ -8,6 +8,11 @@ export async function deleteContentItem(id: string) {
   revalidatePath("/admin/content");
 }
 
+export async function togglePostedStatus(id: string, currentStatus: boolean) {
+  await client.patch(id).set({ isPosted: !currentStatus }).commit();
+  revalidatePath("/admin/content");
+}
+
 export async function upsertContentItem(formData: FormData) {
   const _id = formData.get("_id") as string;
   const clientId = formData.get("client") as string;
@@ -17,22 +22,40 @@ export async function upsertContentItem(formData: FormData) {
   const driveLink = formData.get("driveLink") as string;
   const thumbnailLink = formData.get("thumbnailLink") as string;
   const caption = formData.get("caption") as string;
+  const thumbnailFile = formData.get("thumbnailFile") as File | null;
 
-  const doc = {
+  let thumbnailAssetId: string | null = null;
+  if (thumbnailFile && thumbnailFile.size > 0) {
+    const buffer = Buffer.from(await thumbnailFile.arrayBuffer());
+    const asset = await client.assets.upload("image", buffer, {
+      filename: thumbnailFile.name,
+      contentType: thumbnailFile.type,
+    });
+    thumbnailAssetId = asset._id;
+  }
+
+  const doc: { _type: string; [key: string]: unknown } = {
     _type: "contentItem",
     client: { _type: "reference", _ref: clientId },
     month,
     date,
     assetType,
     driveLink,
-    thumbnailLink,
+    thumbnailLink: thumbnailLink || "",
     caption,
   };
+
+  if (thumbnailAssetId) {
+    doc.thumbnail = {
+      _type: "image",
+      asset: { _type: "reference", _ref: thumbnailAssetId },
+    };
+  }
 
   if (_id) {
     await client.patch(_id).set(doc).commit();
   } else {
-    await client.create(doc);
+    await client.create(doc as Parameters<typeof client.create>[0]);
   }
 
   revalidatePath("/admin/content");
