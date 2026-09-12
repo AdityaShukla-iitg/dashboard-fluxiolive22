@@ -6,6 +6,8 @@ import { upsertContentItem, deleteContentItem } from "@/app/actions/adminContent
 import { Plus, Edit2, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
+import { useRouter } from "next/navigation";
+
 export default function ContentManager({ 
   clients, 
   initialContent 
@@ -13,6 +15,7 @@ export default function ContentManager({
   clients: ClientDoc[], 
   initialContent: ContentItem[] 
 }) {
+  const router = useRouter();
   const [contentItems, setContentItems] = useState(initialContent);
   const [selectedClient, setSelectedClient] = useState(clients[0]?._id || "");
   const [modalOpen, setModalOpen] = useState(false);
@@ -28,16 +31,30 @@ export default function ContentManager({
     if (!confirm("Are you sure you want to delete this content item?")) return;
     setContentItems(prev => prev.filter(c => c._id !== id));
     await deleteContentItem(id);
+    router.refresh();
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
-    await upsertContentItem(formData);
+    const res = await upsertContentItem(formData);
     setLoading(false);
     setModalOpen(false);
-    window.location.reload();
+
+    if (res?.item) {
+      const saved = res.item as unknown as ContentItem;
+      setContentItems(prev => {
+        const idx = prev.findIndex(c => c._id === saved._id);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = { ...prev[idx], ...saved };
+          return next;
+        }
+        return [saved, ...prev];
+      });
+    }
+    router.refresh();
   };
 
   const openNew = () => {

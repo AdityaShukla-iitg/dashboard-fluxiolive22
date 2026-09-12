@@ -52,11 +52,13 @@ export async function upsertContentItem(formData: FormData) {
     };
   }
 
+  let result;
   if (_id) {
-    await client.patch(_id).set(doc).commit();
+    result = await client.patch(_id).set(doc).commit();
   } else {
-    await client.create(doc as Parameters<typeof client.create>[0]);
+    result = await client.create(doc as Parameters<typeof client.create>[0]);
   }
 
   revalidatePath("/admin/content");
+  return { success: true, item: result };
 }

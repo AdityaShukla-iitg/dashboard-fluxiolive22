@@ -54,14 +54,16 @@ export async function upsertClient(formData: FormData) {
     doc.passwordHash = await bcrypt.hash(password, 10);
   }
 
+  let result;
   if (_id) {
     // Edit existing
-    await client.patch(_id).set(doc).commit();
+    result = await client.patch(_id).set(doc).commit();
   } else {
     // Create new
     if (!password) throw new Error("Password required for new clients.");
-    await client.create(doc);
+    result = await client.create(doc);
   }
 
   revalidatePath("/admin/clients");
+  return { success: true, client: result };
 }

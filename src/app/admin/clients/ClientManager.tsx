@@ -5,7 +5,10 @@ import { ClientDoc } from "@/lib/sanity";
 import { toggleClientStatus, upsertClient, deleteClient } from "@/app/actions/adminClients";
 import { Plus, Edit2, PauseCircle, PlayCircle, X, Trash2 } from "lucide-react";
 
+import { useRouter } from "next/navigation";
+
 export default function ClientManager({ initialClients }: { initialClients: ClientDoc[] }) {
+  const router = useRouter();
   const [clients, setClients] = useState(initialClients);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<ClientDoc | null>(null);
@@ -15,6 +18,7 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
     // Optimistic update
     setClients(prev => prev.map(c => c._id === id ? { ...c, status: currentStatus === "active" ? "paused" : "active" } : c));
     await toggleClientStatus(id, currentStatus);
+    router.refresh();
   };
 
   const handleDelete = async (id: string, name: string) => {
@@ -23,17 +27,30 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
     }
     setClients(prev => prev.filter(c => c._id !== id));
     await deleteClient(id);
+    router.refresh();
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
-    await upsertClient(formData);
+    const res = await upsertClient(formData);
     setLoading(false);
     setModalOpen(false);
-    // Ideally we re-fetch or rely on Server Actions revalidatePath to refresh the page.
-    window.location.reload();
+
+    if (res?.client) {
+      const saved = res.client as unknown as ClientDoc;
+      setClients(prev => {
+        const idx = prev.findIndex(c => c._id === saved._id);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = { ...prev[idx], ...saved };
+          return next;
+        }
+        return [saved, ...prev];
+      });
+    }
+    router.refresh();
   };
 
   const openNew = () => {
