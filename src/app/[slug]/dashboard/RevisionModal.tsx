@@ -45,21 +45,28 @@ export default function RevisionModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-zinc-950 border border-zinc-800 w-full max-w-lg p-6 relative shadow-2xl">
-        <button onClick={onClose} className="absolute top-4 right-4 text-zinc-500 hover:text-white">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
+      <div className="bg-zinc-950 border-t sm:border border-zinc-800 w-full sm:max-w-lg p-5 sm:p-6 relative shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
+        {/* Mobile Pull Bar */}
+        <div className="w-12 h-1 bg-zinc-800 mx-auto mb-4 sm:hidden" />
+
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 p-2 text-zinc-500 hover:text-white transition-colors"
+          aria-label="Close modal"
+        >
           <X className="w-5 h-5" />
         </button>
 
-        <h3 className="text-2xl font-display uppercase tracking-widest mb-6">Request Revision</h3>
+        <h3 className="text-xl sm:text-2xl font-display uppercase tracking-widest mb-6">Request Revision</h3>
 
         {success ? (
-          <div className="py-12 text-center">
+          <div className="py-10 sm:py-12 text-center">
             <p className="text-brand-green-light font-display uppercase text-2xl mb-2">Submitted</p>
-            <p className="text-zinc-400 font-sans text-sm">We&apos;ve received your request.</p>
+            <p className="text-zinc-400 font-sans text-sm">We have received your request.</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             <div className="space-y-2">
               <label className="block text-xs font-mono uppercase tracking-widest text-zinc-400">Message</label>
               <textarea 
@@ -68,7 +75,7 @@ export default function RevisionModal({
                 rows={4}
                 maxLength={1000}
                 placeholder="What needs changing?"
-                className="w-full bg-zinc-900 border border-zinc-800 p-4 font-sans text-sm text-white focus:border-brand-red focus:ring-1 focus:ring-brand-red resize-none"
+                className="w-full bg-zinc-900 border border-zinc-800 p-3 sm:p-4 font-sans text-sm text-white focus:border-brand-red focus:ring-1 focus:ring-brand-red resize-none text-base sm:text-sm"
               />
             </div>
 
@@ -78,7 +85,7 @@ export default function RevisionModal({
                 type="file" 
                 name="attachment" 
                 accept="image/*,.pdf,video/mp4,video/quicktime"
-                className="w-full bg-zinc-900 border border-zinc-800 p-3 font-sans text-xs text-zinc-300 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-xs file:font-mono file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer"
+                className="w-full bg-zinc-900 border border-zinc-800 p-3 font-sans text-xs text-zinc-300 file:mr-3 file:py-2 file:px-3 file:border-0 file:text-xs file:font-mono file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer"
               />
             </div>
 
@@ -89,7 +96,7 @@ export default function RevisionModal({
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full h-14 bg-brand-red hover:bg-red-700 text-white font-display uppercase tracking-widest text-lg disabled:opacity-50 transition-colors"
+              className="w-full h-12 sm:h-14 bg-brand-red hover:bg-red-700 text-white font-display uppercase tracking-widest text-base sm:text-lg disabled:opacity-50 transition-colors flex items-center justify-center"
             >
               {loading ? "Sending..." : "Submit Request"}
             </button>

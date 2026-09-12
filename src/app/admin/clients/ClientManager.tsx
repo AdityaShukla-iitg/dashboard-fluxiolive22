@@ -72,32 +72,94 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
         </button>
       </div>
 
+      {/* Client List */}
       <div className="grid grid-cols-1 gap-4">
         {clients.map(c => (
-          <div key={c._id} className="bg-zinc-900 border border-zinc-800 p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-display uppercase tracking-wider">{c.name}</h2>
-              <p className="text-zinc-500 font-mono text-xs mt-1">/{c.slug.current}</p>
-            </div>
-            
-            <div className="flex items-center gap-4 text-sm font-sans text-zinc-400">
-              <span className="bg-zinc-950 px-2 py-1 border border-zinc-800">{c.plan}</span>
-              <span>{c.postersIncluded}P / {c.videosIncluded}V</span>
-              <span className={`px-2 py-1 ${c.status === 'active' ? 'text-brand-green-light' : 'text-zinc-500'}`}>
-                {c.status.toUpperCase()}
-              </span>
+          <div key={c._id} className="bg-zinc-900 border border-zinc-800 p-4 md:p-6">
+            {/* Mobile Smartphone Card (< md) */}
+            <div className="md:hidden space-y-4">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h2 className="text-xl font-display uppercase tracking-wider text-white">{c.name}</h2>
+                  <p className="text-zinc-500 font-mono text-xs mt-0.5">/{c.slug.current}</p>
+                </div>
+                <span className={`px-2 py-1 text-xs font-mono uppercase tracking-wider border ${
+                  c.status === 'active' 
+                    ? 'text-brand-green-light border-brand-green/40 bg-brand-green/10' 
+                    : 'text-zinc-500 border-zinc-800 bg-zinc-950'
+                }`}>
+                  {c.status}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
+                <span className="bg-zinc-950 px-2.5 py-1 border border-zinc-800 text-zinc-300">{c.plan} Plan</span>
+                <span className="bg-zinc-950 px-2.5 py-1 border border-zinc-800">{c.postersIncluded}P / {c.videosIncluded}V</span>
+                <span className="bg-zinc-950 px-2.5 py-1 border border-zinc-800">{c.revisionsIncluded} Rev</span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-zinc-800/80">
+                <button 
+                  onClick={() => handleToggle(c._id, c.status)} 
+                  className="min-h-[44px] flex items-center justify-center gap-1.5 bg-zinc-950 border border-zinc-800 text-zinc-300 active:bg-zinc-800 text-xs font-mono uppercase tracking-wider"
+                >
+                  {c.status === 'active' ? (
+                    <>
+                      <PauseCircle className="w-4 h-4" />
+                      <span>Pause</span>
+                    </>
+                  ) : (
+                    <>
+                      <PlayCircle className="w-4 h-4" />
+                      <span>Resume</span>
+                    </>
+                  )}
+                </button>
+
+                <button 
+                  onClick={() => openEdit(c)} 
+                  className="min-h-[44px] flex items-center justify-center gap-1.5 bg-zinc-950 border border-zinc-800 text-zinc-300 active:bg-zinc-800 text-xs font-mono uppercase tracking-wider"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  <span>Edit</span>
+                </button>
+
+                <button 
+                  onClick={() => handleDelete(c._id, c.name)} 
+                  className="min-h-[44px] flex items-center justify-center gap-1.5 bg-zinc-950 border border-brand-red/30 text-brand-red active:bg-brand-red/20 text-xs font-mono uppercase tracking-wider"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete</span>
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button onClick={() => handleToggle(c._id, c.status)} className="p-2 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white transition-colors" title="Toggle Status">
-                {c.status === 'active' ? <PauseCircle className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
-              </button>
-              <button onClick={() => openEdit(c)} className="p-2 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white transition-colors" title="Edit">
-                <Edit2 className="w-4 h-4" />
-              </button>
-              <button onClick={() => handleDelete(c._id, c.name)} className="p-2 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-brand-red transition-colors" title="Delete Client">
-                <Trash2 className="w-4 h-4" />
-              </button>
+            {/* Desktop Card (md+) */}
+            <div className="hidden md:flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-display uppercase tracking-wider">{c.name}</h2>
+                <p className="text-zinc-500 font-mono text-xs mt-1">/{c.slug.current}</p>
+              </div>
+              
+              <div className="flex items-center gap-4 text-sm font-sans text-zinc-400">
+                <span className="bg-zinc-950 px-2 py-1 border border-zinc-800">{c.plan}</span>
+                <span>{c.postersIncluded}P / {c.videosIncluded}V</span>
+                <span className={`px-2 py-1 ${c.status === 'active' ? 'text-brand-green-light' : 'text-zinc-500'}`}>
+                  {c.status.toUpperCase()}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button onClick={() => handleToggle(c._id, c.status)} className="p-2 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white transition-colors" title="Toggle Status">
+                  {c.status === 'active' ? <PauseCircle className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
+                </button>
+                <button onClick={() => openEdit(c)} className="p-2 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white transition-colors" title="Edit">
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button onClick={() => handleDelete(c._id, c.name)} className="p-2 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-brand-red transition-colors" title="Delete Client">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -109,32 +171,35 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
       </div>
 
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-zinc-950 border border-zinc-800 w-full max-w-xl p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto">
-            <button type="button" onClick={() => setModalOpen(false)} className="absolute top-4 right-4 text-zinc-500 hover:text-white">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-zinc-950 border-t sm:border border-zinc-800 w-full sm:max-w-xl p-5 sm:p-6 relative shadow-2xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
+            {/* Mobile Grab Bar */}
+            <div className="w-12 h-1 bg-zinc-800 mx-auto mb-4 sm:hidden" />
+
+            <button type="button" onClick={() => setModalOpen(false)} className="absolute top-4 right-4 p-2 text-zinc-500 hover:text-white">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-2xl font-display uppercase tracking-widest mb-6">
+            <h3 className="text-xl sm:text-2xl font-display uppercase tracking-widest mb-6">
               {editingClient ? "Edit Client" : "New Client"}
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <input type="hidden" name="_id" value={editingClient?._id || ""} />
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-mono uppercase text-zinc-400">Name</label>
-                  <input name="name" required defaultValue={editingClient?.name} className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-sm text-white" />
+                  <input name="name" required defaultValue={editingClient?.name} className="w-full bg-zinc-900 border border-zinc-800 p-3 sm:p-2 font-sans text-base sm:text-sm text-white" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-mono uppercase text-zinc-400">Slug</label>
-                  <input name="slug" required defaultValue={editingClient?.slug.current} className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-sm text-white" />
+                  <input name="slug" required defaultValue={editingClient?.slug.current} className="w-full bg-zinc-900 border border-zinc-800 p-3 sm:p-2 font-sans text-base sm:text-sm text-white" />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-mono uppercase text-zinc-400">Plan</label>
-                  <select name="plan" required defaultValue={editingClient?.plan || "Silver"} className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-sm text-white h-[38px]">
+                  <select name="plan" required defaultValue={editingClient?.plan || "Silver"} className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-base sm:text-sm text-white h-[44px] sm:h-[38px]">
                     <option value="Silver">Silver</option>
                     <option value="Gold">Gold</option>
                     <option value="Premium">Premium</option>
@@ -143,26 +208,26 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-mono uppercase text-zinc-400">Password {editingClient ? "(leave blank to keep)" : ""}</label>
-                  <input name="password" type="password" required={!editingClient} className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-sm text-white" />
+                  <input name="password" type="password" required={!editingClient} className="w-full bg-zinc-900 border border-zinc-800 p-3 sm:p-2 font-sans text-base sm:text-sm text-white" />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-mono uppercase text-zinc-400">Posters</label>
-                  <input name="postersIncluded" type="number" required defaultValue={editingClient?.postersIncluded || 4} className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-sm text-white" />
+                  <label className="text-[11px] sm:text-xs font-mono uppercase text-zinc-400">Posters</label>
+                  <input name="postersIncluded" type="number" required defaultValue={editingClient?.postersIncluded || 4} className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-base sm:text-sm text-white" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-mono uppercase text-zinc-400">Videos</label>
-                  <input name="videosIncluded" type="number" required defaultValue={editingClient?.videosIncluded || 1} className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-sm text-white" />
+                  <label className="text-[11px] sm:text-xs font-mono uppercase text-zinc-400">Videos</label>
+                  <input name="videosIncluded" type="number" required defaultValue={editingClient?.videosIncluded || 1} className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-base sm:text-sm text-white" />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-mono uppercase text-zinc-400">Revisions</label>
-                  <input name="revisionsIncluded" type="number" required defaultValue={editingClient?.revisionsIncluded || 2} className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-sm text-white" />
+                  <label className="text-[11px] sm:text-xs font-mono uppercase text-zinc-400">Revisions</label>
+                  <input name="revisionsIncluded" type="number" required defaultValue={editingClient?.revisionsIncluded || 2} className="w-full bg-zinc-900 border border-zinc-800 p-2 font-sans text-base sm:text-sm text-white" />
                 </div>
               </div>
 
-              <button type="submit" disabled={loading} className="w-full mt-6 bg-brand-green hover:bg-brand-green-light text-white font-display uppercase tracking-widest py-3 transition-colors">
+              <button type="submit" disabled={loading} className="w-full mt-6 bg-brand-green hover:bg-brand-green-light text-white font-display uppercase tracking-widest py-3 min-h-[48px] transition-colors flex items-center justify-center">
                 {loading ? "Saving..." : "Save Client"}
               </button>
             </form>

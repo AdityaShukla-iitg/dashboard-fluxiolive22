@@ -34,7 +34,7 @@ export default function AdminLogin() {
               name="password"
               placeholder="Admin Password"
               required
-              className="w-full bg-zinc-900 border-zinc-800 h-14 px-4 uppercase font-sans tracking-widest placeholder:text-zinc-600 focus:border-brand-green focus:ring-1 focus:ring-brand-green"
+              className="w-full bg-zinc-900 border-zinc-800 h-14 px-4 uppercase font-sans tracking-widest text-base sm:text-sm placeholder:text-zinc-600 focus:border-brand-green focus:ring-1 focus:ring-brand-green"
             />
           </div>
           
