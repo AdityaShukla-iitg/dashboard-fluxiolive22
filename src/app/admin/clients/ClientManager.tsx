@@ -4,6 +4,8 @@ import { useState } from "react";
 import { ClientDoc } from "@/lib/sanity";
 import { toggleClientStatus, upsertClient, deleteClient } from "@/app/actions/adminClients";
 import { Plus, Edit2, PauseCircle, PlayCircle, X, Trash2 } from "lucide-react";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal";
+import ToastNotification, { ToastMessage } from "@/components/ToastNotification";
 
 import { useRouter } from "next/navigation";
 
@@ -14,26 +16,61 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
   const [editingClient, setEditingClient] = useState<ClientDoc | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Delete modal state
+  const [clientToDelete, setClientToDelete] = useState<ClientDoc | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Toast notification state
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+
   const handleToggle = async (id: string, currentStatus: string) => {
     // Optimistic update
     setClients(prev => prev.map(c => c._id === id ? { ...c, status: currentStatus === "active" ? "paused" : "active" } : c));
     await toggleClientStatus(id, currentStatus);
+    setToast({
+      id: Date.now().toString(),
+      type: "info",
+      title: "STATUS UPDATED",
+      message: `Client status changed to ${currentStatus === "active" ? "Paused" : "Active"}.`,
+    });
     router.refresh();
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to permanently delete "${name}" and all associated deliverables?`)) {
-      return;
+  const handleConfirmDelete = async () => {
+    if (!clientToDelete) return;
+
+    setIsDeleting(true);
+    const targetId = clientToDelete._id;
+    const targetName = clientToDelete.name;
+
+    const res = await deleteClient(targetId);
+    setIsDeleting(false);
+    setClientToDelete(null);
+
+    if (res?.error) {
+      setToast({
+        id: Date.now().toString(),
+        type: "error",
+        title: "DELETE FAILED",
+        message: res.error,
+      });
+    } else {
+      setClients(prev => prev.filter(c => c._id !== targetId));
+      setToast({
+        id: Date.now().toString(),
+        type: "delete",
+        title: "CLIENT DELETED",
+        message: `Client "${targetName}" and all associated data have been permanently removed.`,
+      });
+      router.refresh();
     }
-    setClients(prev => prev.filter(c => c._id !== id));
-    await deleteClient(id);
-    router.refresh();
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
+    const isEditing = Boolean(editingClient);
     const res = await upsertClient(formData);
     setLoading(false);
     setModalOpen(false);
@@ -48,6 +85,13 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
           return next;
         }
         return [saved, ...prev];
+      });
+
+      setToast({
+        id: Date.now().toString(),
+        type: "success",
+        title: isEditing ? "CLIENT UPDATED" : "CLIENT CREATED",
+        message: `Client "${saved.name}" has been saved successfully.`,
       });
     }
     router.refresh();
@@ -125,8 +169,9 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
                 </button>
 
                 <button 
-                  onClick={() => handleDelete(c._id, c.name)} 
+                  onClick={() => setClientToDelete(c)} 
                   className="min-h-[44px] flex items-center justify-center gap-1.5 bg-zinc-950 border border-brand-red/30 text-brand-red active:bg-brand-red/20 text-xs font-mono uppercase tracking-wider"
+                  title="Delete Client"
                 >
                   <Trash2 className="w-4 h-4" />
                   <span>Delete</span>
@@ -156,7 +201,7 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
                 <button onClick={() => openEdit(c)} className="p-2 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white transition-colors" title="Edit">
                   <Edit2 className="w-4 h-4" />
                 </button>
-                <button onClick={() => handleDelete(c._id, c.name)} className="p-2 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-brand-red transition-colors" title="Delete Client">
+                <button onClick={() => setClientToDelete(c)} className="p-2 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-brand-red transition-colors" title="Delete Client">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -234,6 +279,24 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Popup Modal */}
+      <DeleteConfirmModal
+        isOpen={Boolean(clientToDelete)}
+        title="DELETE CLIENT BRAND"
+        itemName={clientToDelete?.name || ""}
+        itemType="client brand and all deliverables"
+        description="Are you sure you want to permanently delete this brand? All portal access, monthly deliveries, and revision records will be permanently removed."
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setClientToDelete(null)}
+      />
+
+      {/* Floating Notification Toast UI */}
+      <ToastNotification
+        toast={toast}
+        onClose={() => setToast(null)}
+      />
     </div>
   );
 }

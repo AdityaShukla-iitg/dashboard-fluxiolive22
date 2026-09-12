@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { toggleRevisionStatus } from "@/app/actions/adminRevisions";
+import { toggleRevisionStatus, deleteRevision } from "@/app/actions/adminRevisions";
 import { format, parseISO } from "date-fns";
-import { ExternalLink, CheckCircle, Circle, Paperclip, LayoutDashboard, HardDrive } from "lucide-react";
+import { ExternalLink, CheckCircle, Circle, Paperclip, LayoutDashboard, HardDrive, Trash2 } from "lucide-react";
 import Link from "next/link";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal";
+import ToastNotification, { ToastMessage } from "@/components/ToastNotification";
+import { useRouter } from "next/navigation";
 
 export interface RevisionItem {
   _id: string;
@@ -35,13 +38,58 @@ export interface RevisionItem {
 }
 
 export default function RevisionsManager({ initialRevisions }: { initialRevisions: RevisionItem[] }) {
+  const router = useRouter();
   const [revisions, setRevisions] = useState<RevisionItem[]>(initialRevisions);
 
+  // Delete modal state
+  const [revisionToDelete, setRevisionToDelete] = useState<RevisionItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Toast notification state
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+
   const handleToggle = async (id: string, currentStatus: string) => {
+    const nextStatus = currentStatus === "open" ? "resolved" : "open";
     setRevisions(prev =>
-      prev.map(r => (r._id === id ? { ...r, status: currentStatus === "open" ? "resolved" : "open" } : r))
+      prev.map(r => (r._id === id ? { ...r, status: nextStatus } : r))
     );
     await toggleRevisionStatus(id, currentStatus);
+    setToast({
+      id: Date.now().toString(),
+      type: "info",
+      title: "REVISION UPDATED",
+      message: `Revision marked as ${nextStatus === "resolved" ? "Resolved" : "Open"}.`,
+    });
+    router.refresh();
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!revisionToDelete) return;
+    setIsDeleting(true);
+    const targetId = revisionToDelete._id;
+    const clientName = revisionToDelete.client?.name || "Client";
+
+    const res = await deleteRevision(targetId);
+    setIsDeleting(false);
+    setRevisionToDelete(null);
+
+    if (res?.error) {
+      setToast({
+        id: Date.now().toString(),
+        type: "error",
+        title: "DELETE FAILED",
+        message: res.error,
+      });
+    } else {
+      setRevisions(prev => prev.filter(r => r._id !== targetId));
+      setToast({
+        id: Date.now().toString(),
+        type: "delete",
+        title: "REVISION DELETED",
+        message: `Revision note for "${clientName}" has been removed.`,
+      });
+      router.refresh();
+    }
   };
 
   return (
@@ -93,26 +141,37 @@ export default function RevisionsManager({ initialRevisions }: { initialRevision
                   </p>
                 </div>
 
-                <button
-                  onClick={() => handleToggle(r._id, r.status)}
-                  className={`w-full sm:w-auto min-h-[44px] flex items-center justify-center gap-2 text-xs font-mono uppercase tracking-widest px-4 py-2 border transition-colors ${
-                    r.status === "resolved"
-                      ? "border-brand-green text-brand-green-light bg-brand-green/20"
-                      : "border-zinc-700 text-zinc-300 hover:text-white hover:border-white bg-zinc-950"
-                  }`}
-                >
-                  {r.status === "resolved" ? (
-                    <>
-                      <CheckCircle className="w-4 h-4 text-brand-green-light" />
-                      <span>Resolved</span>
-                    </>
-                  ) : (
-                    <>
-                      <Circle className="w-4 h-4" />
-                      <span>Mark Resolved</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => handleToggle(r._id, r.status)}
+                    className={`flex-1 sm:flex-initial min-h-[44px] flex items-center justify-center gap-2 text-xs font-mono uppercase tracking-widest px-4 py-2 border transition-colors ${
+                      r.status === "resolved"
+                        ? "border-brand-green text-brand-green-light bg-brand-green/20"
+                        : "border-zinc-700 text-zinc-300 hover:text-white hover:border-white bg-zinc-950"
+                    }`}
+                  >
+                    {r.status === "resolved" ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 text-brand-green-light" />
+                        <span>Resolved</span>
+                      </>
+                    ) : (
+                      <>
+                        <Circle className="w-4 h-4" />
+                        <span>Mark Resolved</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setRevisionToDelete(r)}
+                    className="min-h-[44px] px-3.5 py-2 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-brand-red hover:border-brand-red/50 transition-colors flex items-center justify-center"
+                    title="Delete Revision"
+                    aria-label="Delete revision request"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               {/* Target Asset Information Box */}
@@ -223,6 +282,28 @@ export default function RevisionsManager({ initialRevisions }: { initialRevision
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Popup Modal */}
+      <DeleteConfirmModal
+        isOpen={Boolean(revisionToDelete)}
+        title="DELETE REVISION REQUEST"
+        itemName={
+          revisionToDelete?.client?.name 
+            ? `Revision for ${revisionToDelete.client.name}`
+            : "Client Revision Request"
+        }
+        itemType="revision request note"
+        description="Are you sure you want to permanently delete this revision request? This note and any uploaded reference attachments will be permanently removed from Sanity CMS."
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setRevisionToDelete(null)}
+      />
+
+      {/* Floating Notification Toast UI */}
+      <ToastNotification
+        toast={toast}
+        onClose={() => setToast(null)}
+      />
     </div>
   );
 }

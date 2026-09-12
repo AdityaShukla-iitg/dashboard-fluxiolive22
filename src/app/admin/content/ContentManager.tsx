@@ -5,6 +5,8 @@ import { ClientDoc, ContentItem } from "@/lib/sanity";
 import { upsertContentItem, deleteContentItem } from "@/app/actions/adminContent";
 import { Plus, Edit2, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal";
+import ToastNotification, { ToastMessage } from "@/components/ToastNotification";
 
 import { useRouter } from "next/navigation";
 
@@ -22,15 +24,32 @@ export default function ContentManager({
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Delete modal state
+  const [itemToDelete, setItemToDelete] = useState<ContentItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Toast notification state
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+
   const filteredContent = contentItems.filter(c => c.client?._ref === selectedClient);
   const now = new Date();
   const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const currentDateStr = format(now, 'yyyy-MM-dd');
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this content item?")) return;
-    setContentItems(prev => prev.filter(c => c._id !== id));
-    await deleteContentItem(id);
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    const targetId = itemToDelete._id;
+    await deleteContentItem(targetId);
+    setContentItems(prev => prev.filter(c => c._id !== targetId));
+    setIsDeleting(false);
+    setItemToDelete(null);
+    setToast({
+      id: Date.now().toString(),
+      type: "delete",
+      title: "ASSET DELETED",
+      message: "Deliverable item has been permanently removed.",
+    });
     router.refresh();
   };
 
@@ -38,6 +57,7 @@ export default function ContentManager({
     e.preventDefault();
     setLoading(true);
     const formData = new FormData(e.currentTarget);
+    const isEditing = Boolean(editingItem);
     const res = await upsertContentItem(formData);
     setLoading(false);
     setModalOpen(false);
@@ -52,6 +72,13 @@ export default function ContentManager({
           return next;
         }
         return [saved, ...prev];
+      });
+
+      setToast({
+        id: Date.now().toString(),
+        type: "success",
+        title: isEditing ? "ASSET UPDATED" : "ASSET ADDED",
+        message: "Deliverable item has been saved successfully.",
       });
     }
     router.refresh();
@@ -134,7 +161,7 @@ export default function ContentManager({
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
                   <button 
-                    onClick={() => handleDelete(item._id)} 
+                    onClick={() => setItemToDelete(item)} 
                     className="p-2 text-zinc-400 hover:text-brand-red bg-zinc-950 border border-zinc-800 transition-colors"
                     title="Delete Asset"
                   >
@@ -222,6 +249,28 @@ export default function ContentManager({
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Popup Modal */}
+      <DeleteConfirmModal
+        isOpen={Boolean(itemToDelete)}
+        title="DELETE CONTENT ASSET"
+        itemName={
+          itemToDelete?.caption 
+            ? (itemToDelete.caption.slice(0, 40) + (itemToDelete.caption.length > 40 ? "..." : ""))
+            : `${itemToDelete?.assetType?.toUpperCase() || "ASSET"} (${itemToDelete?.date || itemToDelete?.month || ""})`
+        }
+        itemType="content deliverable"
+        description="Are you sure you want to permanently delete this deliverable asset? It will be permanently removed from the client portal and Sanity database."
+        isDeleting={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setItemToDelete(null)}
+      />
+
+      {/* Floating Notification Toast UI */}
+      <ToastNotification
+        toast={toast}
+        onClose={() => setToast(null)}
+      />
     </div>
   );
 }
