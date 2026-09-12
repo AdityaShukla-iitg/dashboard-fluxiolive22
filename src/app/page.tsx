@@ -2,7 +2,6 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { loginRoot } from "@/app/actions/rootAuth";
-import Link from "next/link";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -40,7 +39,7 @@ export default function Home() {
             <input
               type="text"
               name="slug"
-              placeholder="e.g. acme"
+              placeholder="e.g. acme or fluxio live"
               className="w-full bg-zinc-900 border-zinc-800 h-12 sm:h-14 px-4 uppercase font-sans tracking-wider text-base sm:text-sm placeholder:text-zinc-600 focus:border-brand-green focus:ring-1 focus:ring-brand-green"
             />
           </div>
@@ -69,14 +68,8 @@ export default function Home() {
           </div>
         </form>
 
-        <div className="pt-4 border-t border-zinc-900 flex justify-between items-center text-xs font-mono uppercase tracking-widest text-zinc-600">
-          <span>Private Access</span>
-          <Link
-            href="/admin/login"
-            className="text-zinc-500 hover:text-white transition-colors underline underline-offset-4"
-          >
-            Admin Sign In
-          </Link>
+        <div className="pt-4 border-t border-zinc-900 text-center text-xs font-mono uppercase tracking-widest text-zinc-600">
+          <span>Private Client & Agency Access</span>
         </div>
       </div>
     </div>

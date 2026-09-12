@@ -17,7 +17,8 @@ export async function loginRoot(
     return { error: "Invalid form submission." };
   }
 
-  const slug = (formData.get("slug") as string)?.trim().toLowerCase();
+  const rawIdentifier = (formData.get("slug") as string)?.trim().toLowerCase() || "";
+  const normalizedSlug = rawIdentifier.replace(/[\s-_]+/g, "");
   const password = formData.get("password") as string;
 
   if (!password) {
@@ -26,17 +27,21 @@ export async function loginRoot(
 
   const adminPassword = process.env.ADMIN_PASSWORD;
 
-  // If no slug is provided, check if it is the admin logging in
-  if (!slug) {
-    if (adminPassword && password === adminPassword) {
-      await createAdminSession();
-      redirect("/admin/clients");
-    }
-    return { error: "Brand identifier is required." };
+  // Direct Agency Admin sign in when entering "fluxio live", "admin", or leaving blank with admin password
+  const isAdminIdentifier = 
+    !rawIdentifier || 
+    normalizedSlug === "fluxiolive" || 
+    normalizedSlug === "fluxio" || 
+    normalizedSlug === "admin";
+
+  if (adminPassword && password === adminPassword && isAdminIdentifier) {
+    await createAdminSession();
+    redirect("/admin/clients");
   }
 
-  // If slug is provided and matches admin password (Master Key)
-  if (adminPassword && password === adminPassword) {
+  // Master key preview for a specific client slug using admin password
+  if (adminPassword && password === adminPassword && rawIdentifier) {
+    const slug = rawIdentifier.replace(/\s+/g, "-");
     const query = `*[_type == "client" && slug.current == $slug][0]`;
     const targetClient = await client.fetch<ClientDoc | null>(query, { slug });
     if (targetClient) {
@@ -46,6 +51,11 @@ export async function loginRoot(
   }
 
   // Standard client credentials verification
+  const slug = rawIdentifier.replace(/\s+/g, "-");
+  if (!slug) {
+    return { error: "Brand identifier is required." };
+  }
+
   const query = `*[_type == "client" && slug.current == $slug][0]`;
   const clientData = await client.fetch<ClientDoc | null>(query, { slug });
 
