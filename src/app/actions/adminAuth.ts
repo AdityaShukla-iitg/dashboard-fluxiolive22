@@ -1,30 +1,25 @@
-"use server";
-
-import { createAdminSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
+﻿import { createAdminSession } from "@/lib/auth";
 
 export interface AuthState {
   error?: string;
+  redirectUrl?: string;
 }
 
-export async function loginAdmin(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
-  let destinationUrl = "";
-
+export async function loginAdmin(
+  prevState: AuthState | null,
+  formData: FormData
+): Promise<AuthState> {
   try {
-    if (!formData || typeof formData.get !== "function") {
-      return { error: "Invalid form submission." };
-    }
-
-    const password = (formData.get("password") as string)?.trim() || "";
+    const password = formData.get("password") as string;
     const adminPassword = process.env.ADMIN_PASSWORD;
 
-    if (!password || !adminPassword) {
-      return { error: "Authentication configuration error." };
+    if (!adminPassword) {
+      return { error: "Admin authentication is not configured on this server." };
     }
 
     if (password === adminPassword) {
       await createAdminSession();
-      destinationUrl = "/admin/clients";
+      return { redirectUrl: "/admin/clients" };
     } else {
       return { error: "Invalid admin password." };
     }
@@ -32,10 +27,4 @@ export async function loginAdmin(prevState: AuthState | null, formData: FormData
     console.error("Admin login error:", err);
     return { error: "An unexpected error occurred during sign in." };
   }
-
-  if (destinationUrl) {
-    redirect(destinationUrl);
-  }
-
-  return {};
 }

@@ -1,20 +1,16 @@
-"use server";
-
-import { client, ClientDoc } from "@/lib/sanity";
-import { createClientSession, createAdminSession } from "@/lib/auth";
+﻿import { createClientSession, createAdminSession } from "@/lib/auth";
 import bcrypt from "bcrypt";
-import { redirect } from "next/navigation";
+import { client, ClientDoc } from "@/lib/sanity";
 
 export interface RootAuthState {
   error?: string;
+  redirectUrl?: string;
 }
 
 export async function loginRoot(
   prevState: RootAuthState | null,
   formData: FormData
 ): Promise<RootAuthState> {
-  let destinationUrl = "";
-
   try {
     if (!formData || typeof formData.get !== "function") {
       return { error: "Invalid form submission." };
@@ -30,12 +26,10 @@ export async function loginRoot(
     const lowerIdentifier = rawIdentifier.toLowerCase();
     const compactIdentifier = lowerIdentifier.replace(/[\s-_]+/g, "");
     const slugFromRaw = lowerIdentifier.replace(/[\s_]+/g, "-");
-
+    
     const adminPassword = process.env.ADMIN_PASSWORD;
 
-    // 1. Check if entering with Agency Admin Password
     if (adminPassword && password === adminPassword) {
-      // Agency Admin direct sign-in identifiers
       const isAdminIdentifier =
         !rawIdentifier ||
         compactIdentifier === "fluxiolive" ||
@@ -45,9 +39,8 @@ export async function loginRoot(
 
       if (isAdminIdentifier) {
         await createAdminSession();
-        destinationUrl = "/admin/clients";
+        return { redirectUrl: "/admin/clients" };
       } else {
-        // Admin entering client identifier to directly preview client dashboard as Admin
         const clientQuery = `*[_type == "client" && (
           slug.current == $rawIdentifier ||
           lower(slug.current) == $lowerIdentifier ||
@@ -65,15 +58,13 @@ export async function loginRoot(
 
         if (targetClient?.slug?.current) {
           await createAdminSession();
-          destinationUrl = `/${targetClient.slug.current}/dashboard`;
+          return { redirectUrl: `/${targetClient.slug.current}/dashboard` };
         } else {
-          // Fallback if identifier didn't match a specific client: enter admin suite
           await createAdminSession();
-          destinationUrl = "/admin/clients";
+          return { redirectUrl: "/admin/clients" };
         }
       }
     } else {
-      // 2. Standard Client Credentials Verification
       if (!rawIdentifier) {
         return { error: "Brand identifier is required." };
       }
@@ -111,16 +102,10 @@ export async function loginRoot(
       }
 
       await createClientSession(clientData.slug.current);
-      destinationUrl = `/${clientData.slug.current}/dashboard`;
+      return { redirectUrl: `/${clientData.slug.current}/dashboard` };
     }
   } catch (err: unknown) {
     console.error("Root login error:", err);
     return { error: "An unexpected error occurred during sign in. Please try again." };
   }
-
-  if (destinationUrl) {
-    redirect(destinationUrl);
-  }
-
-  return {};
 }

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { loginClient } from "@/app/actions/clientAuth";
 import { Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -19,10 +20,16 @@ function SubmitButton() {
 }
 
 export default function ClientLogin({ params }: { params: { slug: string } }) {
-  // Bind the slug to the server action
   const actionWithSlug = loginClient.bind(null, params.slug);
   const [state, formAction] = useFormState(actionWithSlug, null);
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state?.redirectUrl) {
+      router.push(state.redirectUrl);
+    }
+  }, [state, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">

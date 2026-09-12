@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { loginRoot } from "@/app/actions/rootAuth";
 import { Eye, EyeOff } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -21,6 +22,13 @@ function SubmitButton() {
 export default function Home() {
   const [state, formAction] = useFormState(loginRoot, null);
   const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state?.redirectUrl) {
+      router.push(state.redirectUrl);
+    }
+  }, [state, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-black">

@@ -1,72 +1,55 @@
-"use server";
-
-import { client, ClientDoc } from "@/lib/sanity";
-import { createClientSession, createAdminSession } from "@/lib/auth";
+﻿import { createClientSession, createAdminSession } from "@/lib/auth";
 import bcrypt from "bcrypt";
-import { redirect } from "next/navigation";
+import { client, ClientDoc } from "@/lib/sanity";
 
 export interface ClientAuthState {
   error?: string;
+  redirectUrl?: string;
 }
 
 export async function loginClient(
-  slug: string,
+  targetSlug: string,
   prevState: ClientAuthState | null,
   formData: FormData
 ): Promise<ClientAuthState> {
-  let destinationUrl = "";
-
   try {
     if (!formData || typeof formData.get !== "function") {
       return { error: "Invalid form submission." };
     }
 
     const password = (formData.get("password") as string)?.trim() || "";
+
     if (!password) {
       return { error: "Password is required." };
     }
 
-    const cleanSlug = (slug || "").trim();
-    const lowerSlug = cleanSlug.toLowerCase();
-    const compactSlug = lowerSlug.replace(/[\s-_]+/g, "");
-    const hyphenSlug = lowerSlug.replace(/[\s_]+/g, "-");
-
-    const clientQuery = `*[_type == "client" && (
-      slug.current == $cleanSlug ||
-      lower(slug.current) == $lowerSlug ||
-      lower(slug.current) == $hyphenSlug ||
-      lower(slug.current) == $compactSlug ||
-      lower(name) == $lowerSlug
-    )][0]`;
-
-    const targetClient = await client.fetch<ClientDoc | null>(clientQuery, {
-      cleanSlug,
-      lowerSlug,
-      hyphenSlug,
-      compactSlug,
-    });
-
-    // 1. Check if entered password is the Admin Master Key
     const adminPassword = process.env.ADMIN_PASSWORD;
+
     if (adminPassword && password === adminPassword) {
-      await createAdminSession();
+      const clientQuery = `*[_type == "client" && slug.current == $targetSlug][0]`;
+      const targetClient = await client.fetch<ClientDoc | null>(clientQuery, { targetSlug });
+
       if (targetClient?.slug?.current) {
-        destinationUrl = `/${targetClient.slug.current}/dashboard`;
+        await createAdminSession();
+        return { redirectUrl: `/${targetClient.slug.current}/dashboard` };
       } else {
-        destinationUrl = "/admin/clients";
+        await createAdminSession();
+        return { redirectUrl: "/admin/clients" };
       }
     } else {
-      // 2. Standard Client Authentication
+      const clientQuery = `*[_type == "client" && slug.current == $targetSlug][0]`;
+      const targetClient = await client.fetch<ClientDoc | null>(clientQuery, { targetSlug });
+
       if (!targetClient || !targetClient.slug?.current) {
         return { error: "Invalid password." };
       }
 
       if (targetClient.status === "paused") {
-        return { error: "This brand account is currently paused. Please contact agency support." };
+        return { error: "This account is currently paused. Please contact agency support." };
       }
 
       if (!targetClient.passwordHash) {
-        return { error: "Account authentication is not configured. Please contact agency support." };
+        return { error: "Authentication is not configured. Please contact agency support." };
       }
 
       const isMatch = await bcrypt.compare(password, targetClient.passwordHash);
@@ -74,18 +57,11 @@ export async function loginClient(
         return { error: "Invalid password." };
       }
 
-      // Success
       await createClientSession(targetClient.slug.current);
-      destinationUrl = `/${targetClient.slug.current}/dashboard`;
+      return { redirectUrl: `/${targetClient.slug.current}/dashboard` };
     }
   } catch (err: unknown) {
     console.error("Client login error:", err);
     return { error: "An unexpected error occurred during sign in. Please try again." };
   }
-
-  if (destinationUrl) {
-    redirect(destinationUrl);
-  }
-
-  return {};
 }
