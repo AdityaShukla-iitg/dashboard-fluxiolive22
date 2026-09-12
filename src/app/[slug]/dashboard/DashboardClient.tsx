@@ -311,7 +311,21 @@ export default function DashboardClient({
                       {/* Media Preview Area */}
                       <div className="w-full bg-zinc-950 relative border-b border-zinc-800 flex flex-col items-center justify-center">
                         {(() => {
-                          if (previewImage) {
+                          if (item.assetType === "reel" && item.driveLink) {
+                              const isDrive = item.driveLink.includes("drive.google.com");
+                              if (isDrive) {
+                                const embedUrl = item.driveLink.replace(/\/view(\?.*)?$/, "/preview");
+                                return (
+                                  <iframe src={embedUrl} className="w-full aspect-[9/16] md:aspect-video border-none" allow="autoplay" allowFullScreen />
+                                );
+                              } else if (item.driveLink.endsWith(".mp4") || item.driveLink.includes("mixkit") || item.driveLink.endsWith(".webm") || item.driveLink.endsWith(".webp")) {
+                                return (
+                                  <video src={item.driveLink} controls className="w-full h-auto max-h-[80vh] object-contain" />
+                                );
+                              }
+                            }
+                            
+                            if (previewImage) {
                               return (
                                 <img
                                   src={previewImage}
@@ -320,20 +334,8 @@ export default function DashboardClient({
                                 />
                               );
                             }
-
-                            if (item.assetType === "reel" && item.driveLink) {
-                              const isDrive = item.driveLink.includes("drive.google.com");
-                              if (isDrive) {
-                                const embedUrl = item.driveLink.replace(/\/view(\?.*)?$/, "/preview");
-                                return (
-                                  <iframe src={embedUrl} className="w-full aspect-[9/16] md:aspect-video border-none" allow="autoplay" allowFullScreen />
-                                );
-                              } else if (item.driveLink.endsWith(".mp4") || item.driveLink.includes("mixkit")) {
-                                return (
-                                  <video src={item.driveLink} controls className="w-full h-auto max-h-[80vh] object-contain" />
-                                );
-                              }
-                            }
+                            
+                            
                             
                             return (
                               <div className="aspect-video w-full flex items-center justify-center text-zinc-700 font-mono text-sm uppercase tracking-widest">
