@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { ContentItem } from "@/lib/sanity";
-import { Copy, ExternalLink, MessageSquareWarning, Check, Link as LinkIcon, CheckCircle2 } from "lucide-react";
+import { Copy, MessageSquareWarning, Check, Link as LinkIcon, CheckCircle2, Download } from "lucide-react";
 import RevisionModal from "./RevisionModal";
 import { toggleAssetPosted } from "@/app/actions/clientContent";
-import Link from "next/link";
 
 interface DashboardClientProps {
   content: ContentItem[];
@@ -18,8 +17,7 @@ interface DashboardClientProps {
   videosIncluded: number;
   revisionsIncluded: number;
   revisionsUsed: number;
-  isAdmin?: boolean;
-  logoutAction: () => Promise<void>;
+    logoutAction: () => Promise<void>;
 }
 
 export default function DashboardClient({
@@ -32,7 +30,6 @@ export default function DashboardClient({
   videosIncluded,
   revisionsIncluded,
   revisionsUsed,
-  isAdmin,
   logoutAction,
 }: DashboardClientProps) {
   const [content, setContent] = useState<ContentItem[]>(initialContent);
@@ -47,6 +44,7 @@ export default function DashboardClient({
   const [isClient, setIsClient] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [revisionItem, setRevisionItem] = useState<ContentItem | null>(null);
+  const [expandedCaptions, setExpandedCaptions] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setIsClient(true);
@@ -126,31 +124,7 @@ export default function DashboardClient({
   };
 
   return (
-    <div>
-      {/* Admin Mode Top Banner */}
-      {isAdmin && (
-        <div className="bg-brand-green/95 border-b border-brand-green-light px-4 py-2.5 text-xs font-mono uppercase tracking-widest text-white flex flex-wrap items-center justify-between gap-2 sticky top-0 z-50 backdrop-blur">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-brand-green-light animate-pulse" />
-            <span className="text-zinc-200">Admin Master Access • Previewing {clientName}</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/admin/content"
-              className="text-zinc-300 hover:text-white underline underline-offset-4 transition-colors"
-            >
-              Edit Content
-            </Link>
-            <Link
-              href="/admin/clients"
-              className="bg-black px-3 py-1 border border-zinc-800 hover:border-zinc-600 text-white transition-colors"
-            >
-              Admin Panel
-            </Link>
-          </div>
-        </div>
-      )}
-
+    <div className="w-full overflow-x-hidden">
       {/* Responsive Header for Mobile and Desktop */}
       <header className="border-b border-zinc-900 bg-black sticky top-0 z-40 p-4 md:px-8 md:py-6">
         <div className="max-w-6xl mx-auto">
@@ -323,6 +297,7 @@ export default function DashboardClient({
                   const hasResolvedRevision = item.activeRevision?.status === "resolved";
                   const isNew = isRecentItem(item);
                   const previewImage = item.thumbnail?.asset?.url || item.thumbnailLink;
+                  const downloadUrl = item.thumbnail?.asset?.url ? (item.thumbnail.asset.url + "?dl=") : item.driveLink;
 
                   return (
                     <div
@@ -376,13 +351,13 @@ export default function DashboardClient({
                         {/* Mobile Smartphone Action Buttons (< sm) */}
                         <div className="sm:hidden grid grid-cols-2 gap-2 mb-4">
                           <a
-                            href={item.driveLink}
+                            href={downloadUrl || "#"}
                             target="_blank"
                             rel="noreferrer"
                             className="min-h-[44px] flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-mono uppercase tracking-wider bg-zinc-950 border border-zinc-800 text-white active:bg-zinc-800 transition-colors text-center"
                           >
-                            <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
-                            <span className="truncate">Drive</span>
+                            <Download className="w-3.5 h-3.5 flex-shrink-0" />
+                            <span className="truncate">Download</span>
                           </a>
 
                           {hasOpenRevision ? (
@@ -403,12 +378,9 @@ export default function DashboardClient({
                         {/* Desktop Action Buttons (sm+) */}
                         <div className="hidden sm:flex flex-wrap justify-between items-center gap-4 mb-6">
                           <a
-                            href={item.driveLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center gap-2 text-sm font-sans uppercase tracking-widest text-white hover:text-brand-green-light transition-colors"
+                            href={downloadUrl || "#"} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm font-sans uppercase tracking-widest text-white hover:text-brand-green-light transition-colors"
                           >
-                            <ExternalLink className="w-4 h-4" /> View in Drive
+                            <Download className="w-4 h-4" /> Download Asset
                           </a>
 
                           {hasOpenRevision ? (
@@ -436,9 +408,19 @@ export default function DashboardClient({
                               <Copy className="w-3 h-3" /> Copy
                             </button>
                           </div>
-                          <div className="bg-black p-3 sm:p-4 border border-zinc-800 font-sans text-xs sm:text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap flex-grow">
-                            {item.caption || "No caption provided."}
-                          </div>
+                          <div className="bg-black p-3 sm:p-4 border border-zinc-800 font-sans text-xs sm:text-sm text-zinc-300 leading-relaxed flex-grow">
+                              <div className={expandedCaptions[item._id] ? "whitespace-pre-wrap" : "line-clamp-2"}>
+                                {item.caption || "No caption provided."}
+                              </div>
+                              {item.caption && item.caption.length > 80 && (
+                                <button
+                                  onClick={() => setExpandedCaptions(prev => ({...prev, [item._id]: !prev[item._id]}))}
+                                  className="text-brand-green hover:text-brand-green-light font-mono text-[10px] uppercase mt-2 tracking-widest"
+                                >
+                                  {expandedCaptions[item._id] ? "See Less" : "See More"}
+                                </button>
+                              )}
+                            </div>
                         </div>
 
                         {/* Checklist: Mark as posted (Generous touch target for phones) */}

@@ -85,7 +85,6 @@ export default async function ClientDashboard({ params }: { params: { slug: stri
         videosIncluded={clientData.videosIncluded || 0}
         revisionsIncluded={clientData.revisionsIncluded || 0}
         revisionsUsed={revisionsUsed || 0}
-        isAdmin={isAuthorizedAdmin}
         logoutAction={logoutAction}
       />
     </div>
