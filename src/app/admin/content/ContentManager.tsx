@@ -141,16 +141,20 @@ export default function ContentManager({
           <div key={item._id} className="bg-zinc-900 border border-zinc-800 flex flex-col">
             <div className="aspect-video w-full bg-zinc-950 border-b border-zinc-800 relative">
               {(item.thumbnail?.asset?.url || item.thumbnailLink) ? (
-                <img 
-                  src={item.thumbnail?.asset?.url || item.thumbnailLink} 
-                  alt="Thumb" 
-                  className="w-full h-full object-cover" 
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-zinc-700 font-mono text-xs uppercase tracking-widest">
-                  No Preview
-                </div>
-              )}
+                  <img 
+                    src={item.thumbnail?.asset?.url || item.thumbnailLink} 
+                    alt="Thumb" 
+                    className="w-full h-full object-cover" 
+                  />
+                ) : item.assetType === "reel" && item.driveLink ? (
+                  <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                     <span className="text-zinc-600 font-mono text-[10px] tracking-widest uppercase border border-zinc-800 px-3 py-1">Video Link (No Thumb)</span>
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-zinc-700 font-mono text-xs uppercase tracking-widest">
+                    No Preview
+                  </div>
+                )}
               <div className="absolute top-2 right-2 bg-black px-2 py-1 text-[10px] font-mono uppercase border border-zinc-800">
                 {item.assetType}
               </div>
