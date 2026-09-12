@@ -126,7 +126,15 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h2 className="text-xl font-display uppercase tracking-wider text-white">{c.name}</h2>
-                  <p className="text-zinc-500 font-mono text-xs mt-0.5">/{c.slug.current}</p>
+                  <a 
+                    href={`/${c.slug.current}/dashboard`} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="text-zinc-500 hover:text-brand-green-light font-mono text-xs mt-0.5 inline-block transition-colors"
+                    title="Open Client Dashboard"
+                  >
+                    /{c.slug.current} ↗
+                  </a>
                 </div>
                 <span className={`px-2 py-1 text-xs font-mono uppercase tracking-wider border ${
                   c.status === 'active' 
@@ -184,7 +192,15 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
             <div className="hidden md:flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-display uppercase tracking-wider">{c.name}</h2>
-                <p className="text-zinc-500 font-mono text-xs mt-1">/{c.slug.current}</p>
+                <a 
+                  href={`/${c.slug.current}/dashboard`} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="text-zinc-500 hover:text-brand-green-light font-mono text-xs mt-1 inline-block transition-colors"
+                  title="Open Client Dashboard"
+                >
+                  /{c.slug.current} ↗
+                </a>
               </div>
               
               <div className="flex items-center gap-4 text-sm font-sans text-zinc-400">

@@ -6,23 +6,47 @@ import DashboardClient from "./DashboardClient";
 export default async function ClientDashboard({ params }: { params: { slug: string } }) {
   const session = await getSession();
   
-  const isAuthorizedClient = session?.type === "client" && session.slug === params.slug;
+  const isAuthorizedClient =
+    session?.type === "client" &&
+    session?.slug?.toLowerCase() === params.slug?.toLowerCase();
   const isAuthorizedAdmin = session?.type === "admin";
 
   if (!session || (!isAuthorizedClient && !isAuthorizedAdmin)) {
     redirect(`/${params.slug}`);
   }
 
-  // Fetch client data and their content
-  const clientQuery = `*[_type == "client" && slug.current == $slug][0]`;
-  const clientData = await sanityClient.fetch<ClientDoc>(clientQuery, { slug: params.slug });
+  // Fetch client data and their content case-insensitively
+  const cleanSlug = params.slug.trim();
+  const lowerSlug = cleanSlug.toLowerCase();
+  const compactSlug = lowerSlug.replace(/[\s-_]+/g, "");
+  const hyphenSlug = lowerSlug.replace(/[\s_]+/g, "-");
+
+  const clientQuery = `*[_type == "client" && (
+    slug.current == $cleanSlug ||
+    lower(slug.current) == $lowerSlug ||
+    lower(slug.current) == $hyphenSlug ||
+    lower(slug.current) == $compactSlug ||
+    lower(name) == $lowerSlug
+  )][0]`;
+
+  const clientData = await sanityClient.fetch<ClientDoc | null>(clientQuery, {
+    cleanSlug,
+    lowerSlug,
+    hyphenSlug,
+    compactSlug,
+  });
 
   if (!clientData) {
-    redirect(`/${params.slug}`);
+    redirect("/");
   }
 
   if (clientData.status === "paused" && !isAuthorizedAdmin) {
     redirect(`/${params.slug}`);
+  }
+
+  // If the URL slug does not match canonical slug, redirect to canonical slug
+  if (params.slug !== clientData.slug.current) {
+    redirect(`/${clientData.slug.current}/dashboard`);
   }
 
   const contentQuery = `*[_type == "contentItem" && client._ref == $clientId] | order(date desc) {
@@ -51,7 +75,7 @@ export default async function ClientDashboard({ params }: { params: { slug: stri
   const handleLogout = async () => {
     "use server";
     await destroySession();
-    redirect(`/${params.slug}`);
+    redirect("/");
   };
 
   return (

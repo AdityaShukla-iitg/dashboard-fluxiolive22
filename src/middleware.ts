@@ -39,7 +39,9 @@ export async function middleware(request: NextRequest) {
   const slugMatch = path.match(/^\/([^\/]+)\/dashboard/);
   if (slugMatch) {
     const slug = slugMatch[1];
-    const isAuthorizedClient = session?.type === "client" && session.slug === slug;
+    const isAuthorizedClient =
+      session?.type === "client" &&
+      session?.slug?.toLowerCase() === slug.toLowerCase();
     const isAuthorizedAdmin = session?.type === "admin";
 
     if (!isAuthorizedClient && !isAuthorizedAdmin) {
@@ -55,9 +57,19 @@ export async function middleware(request: NextRequest) {
     // Don't intercept _next or api
     if (slug === "_next" || slug === "api" || slug === "favicon.ico") return response;
     
-    if (session?.type === "client" && session.slug === slug) {
+    // If admin is visiting, bypass password screen and send directly to dashboard
+    if (session?.type === "admin") {
       return NextResponse.redirect(new URL(`/${slug}/dashboard`, request.url));
     }
+
+    // If client is already authenticated for this slug, send directly to dashboard
+    if (
+      session?.type === "client" &&
+      session?.slug?.toLowerCase() === slug.toLowerCase()
+    ) {
+      return NextResponse.redirect(new URL(`/${slug}/dashboard`, request.url));
+    }
+
     return response;
   }
 

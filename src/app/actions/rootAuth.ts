@@ -17,50 +17,86 @@ export async function loginRoot(
     return { error: "Invalid form submission." };
   }
 
-  const rawIdentifier = (formData.get("slug") as string)?.trim().toLowerCase() || "";
-  const normalizedSlug = rawIdentifier.replace(/[\s-_]+/g, "");
-  const password = formData.get("password") as string;
+  const rawIdentifier = (formData.get("slug") as string)?.trim() || "";
+  const password = (formData.get("password") as string)?.trim() || "";
 
   if (!password) {
     return { error: "Password is required." };
   }
 
+  const lowerIdentifier = rawIdentifier.toLowerCase();
+  const compactIdentifier = lowerIdentifier.replace(/[\s-_]+/g, "");
+  const slugFromRaw = lowerIdentifier.replace(/[\s_]+/g, "-");
+
   const adminPassword = process.env.ADMIN_PASSWORD;
 
-  // Direct Agency Admin sign in when entering "fluxio live", "admin", or leaving blank with admin password
-  const isAdminIdentifier = 
-    !rawIdentifier || 
-    normalizedSlug === "fluxiolive" || 
-    normalizedSlug === "fluxio" || 
-    normalizedSlug === "admin";
+  // 1. Check if entering with Agency Admin Password
+  if (adminPassword && password === adminPassword) {
+    // Agency Admin direct sign-in identifiers
+    const isAdminIdentifier =
+      !rawIdentifier ||
+      compactIdentifier === "fluxiolive" ||
+      compactIdentifier === "fluxio" ||
+      compactIdentifier === "admin" ||
+      compactIdentifier === "agency";
 
-  if (adminPassword && password === adminPassword && isAdminIdentifier) {
+    if (isAdminIdentifier) {
+      await createAdminSession();
+      redirect("/admin/clients");
+    }
+
+    // Admin entering client identifier to directly preview client dashboard as Admin
+    const clientQuery = `*[_type == "client" && (
+      slug.current == $rawIdentifier ||
+      lower(slug.current) == $lowerIdentifier ||
+      lower(slug.current) == $slugFromRaw ||
+      lower(slug.current) == $compactIdentifier ||
+      lower(name) == $lowerIdentifier
+    )][0]`;
+
+    const targetClient = await client.fetch<ClientDoc | null>(clientQuery, {
+      rawIdentifier,
+      lowerIdentifier,
+      slugFromRaw,
+      compactIdentifier,
+    });
+
+    if (targetClient?.slug?.current) {
+      await createAdminSession();
+      redirect(`/${targetClient.slug.current}/dashboard`);
+    }
+
+    // Fallback if identifier didn't match a specific client: enter admin suite
     await createAdminSession();
     redirect("/admin/clients");
   }
 
-  // Master key preview for a specific client slug using admin password
-  if (adminPassword && password === adminPassword && rawIdentifier) {
-    const slug = rawIdentifier.replace(/\s+/g, "-");
-    const query = `*[_type == "client" && slug.current == $slug][0]`;
-    const targetClient = await client.fetch<ClientDoc | null>(query, { slug });
-    if (targetClient) {
-      await createAdminSession();
-      redirect(`/${slug}/dashboard`);
-    }
-  }
-
-  // Standard client credentials verification
-  const slug = rawIdentifier.replace(/\s+/g, "-");
-  if (!slug) {
+  // 2. Standard Client Credentials Verification
+  if (!rawIdentifier) {
     return { error: "Brand identifier is required." };
   }
 
-  const query = `*[_type == "client" && slug.current == $slug][0]`;
-  const clientData = await client.fetch<ClientDoc | null>(query, { slug });
+  const clientQuery = `*[_type == "client" && (
+    slug.current == $rawIdentifier ||
+    lower(slug.current) == $lowerIdentifier ||
+    lower(slug.current) == $slugFromRaw ||
+    lower(slug.current) == $compactIdentifier ||
+    lower(name) == $lowerIdentifier
+  )][0]`;
 
-  if (!clientData || clientData.status === "paused") {
+  const clientData = await client.fetch<ClientDoc | null>(clientQuery, {
+    rawIdentifier,
+    lowerIdentifier,
+    slugFromRaw,
+    compactIdentifier,
+  });
+
+  if (!clientData) {
     return { error: "Invalid brand identifier or password." };
+  }
+
+  if (clientData.status === "paused") {
+    return { error: "This brand account is currently paused. Please contact agency support." };
   }
 
   const isMatch = await bcrypt.compare(password, clientData.passwordHash);
@@ -69,5 +105,5 @@ export async function loginRoot(
   }
 
   await createClientSession(clientData.slug.current);
-  redirect(`/${slug}/dashboard`);
+  redirect(`/${clientData.slug.current}/dashboard`);
 }
