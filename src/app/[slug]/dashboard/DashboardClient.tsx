@@ -367,7 +367,7 @@ export default function DashboardClient({
                               if (isDrive) {
                                 const embedUrl = item.driveLink.replace(/\/view(\?.*)?$/, "/preview");
                                 return (
-                                  <iframe src={embedUrl} className="w-full aspect-[9/16] md:aspect-video border-none" allow="autoplay" allowFullScreen />
+                                  <iframe src={embedUrl} className="w-full aspect-square md:aspect-video border-none max-h-[70vh]" allow="autoplay" allowFullScreen />
                                 );
                               } else if (item.driveLink.endsWith(".mp4") || item.driveLink.includes("mixkit") || item.driveLink.endsWith(".webm") || item.driveLink.endsWith(".webp")) {
                                 return (
