@@ -37,6 +37,17 @@ export interface RevisionItem {
   };
 }
 
+function safeFormatDate(dateStr?: string, pattern: string = "MMM d, yyyy") {
+  if (!dateStr) return "";
+  try {
+    const parsed = parseISO(dateStr);
+    if (isNaN(parsed.getTime())) return dateStr;
+    return format(parsed, pattern);
+  } catch {
+    return dateStr;
+  }
+}
+
 export default function RevisionsManager({ initialRevisions }: { initialRevisions: RevisionItem[] }) {
   const router = useRouter();
   const [revisions, setRevisions] = useState<RevisionItem[]>(initialRevisions);
@@ -221,7 +232,7 @@ export default function RevisionsManager({ initialRevisions }: { initialRevision
                     )}
                   </div>
                   <p className="text-xs font-mono text-zinc-500 mt-1">
-                    Requested on {format(parseISO(r.createdAt), "MMMM d, yyyy 'at' h:mm a")}
+                    Requested on {safeFormatDate(r.createdAt, "MMMM d, yyyy 'at' h:mm a")}
                   </p>
                 </div>
 
@@ -310,8 +321,8 @@ export default function RevisionsManager({ initialRevisions }: { initialRevision
                         <span className="text-white font-bold uppercase">
                           {r.contentItem.assetType || "Asset"}
                         </span>
-                        {r.contentItem.date && (
-                          <span>• Delivery: {format(parseISO(r.contentItem.date), "MMM d, yyyy")}</span>
+                        {r.contentItem?.date && (
+                          <span>• Delivery: {safeFormatDate(r.contentItem.date, "MMM d, yyyy")}</span>
                         )}
                         {r.contentItem.month && <span>• Month: {r.contentItem.month}</span>}
                       </div>

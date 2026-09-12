@@ -10,6 +10,17 @@ import ToastNotification, { ToastMessage } from "@/components/ToastNotification"
 
 import { useRouter } from "next/navigation";
 
+function safeFormatDate(dateStr?: string, fallback?: string) {
+  if (!dateStr) return fallback || "";
+  try {
+    const parsed = parseISO(dateStr);
+    if (isNaN(parsed.getTime())) return fallback || dateStr;
+    return format(parsed, "MMM d, yyyy");
+  } catch {
+    return fallback || dateStr;
+  }
+}
+
 export default function ContentManager({ 
   clients, 
   initialContent 
@@ -148,7 +159,7 @@ export default function ContentManager({
             <div className="p-4 flex-grow flex flex-col">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-xs font-mono text-zinc-400">
-                  {item.date ? format(parseISO(item.date), "MMM d, yyyy") : item.month}
+                  {safeFormatDate(item.date, item.month)}
                 </span>
 
                 {/* Touch friendly edit & delete action triggers */}

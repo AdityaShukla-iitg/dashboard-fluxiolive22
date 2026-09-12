@@ -1,7 +1,8 @@
-import { getSession, destroySession } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { client as sanityClient, ClientDoc, ContentItem } from "@/lib/sanity";
 import { redirect } from "next/navigation";
 import DashboardClient from "./DashboardClient";
+import { logoutAction } from "@/app/actions/logout";
 
 export default async function ClientDashboard({ params }: { params: { slug: string } }) {
   const session = await getSession();
@@ -36,7 +37,7 @@ export default async function ClientDashboard({ params }: { params: { slug: stri
     compactSlug,
   });
 
-  if (!clientData) {
+  if (!clientData || !clientData.slug?.current) {
     redirect("/");
   }
 
@@ -44,8 +45,8 @@ export default async function ClientDashboard({ params }: { params: { slug: stri
     redirect(`/${params.slug}`);
   }
 
-  // If the URL slug does not match canonical slug, redirect to canonical slug
-  if (params.slug !== clientData.slug.current) {
+  // If the URL slug does not match canonical slug case-insensitively, redirect to canonical slug
+  if (params.slug !== clientData.slug.current && params.slug.toLowerCase() !== clientData.slug.current.toLowerCase()) {
     redirect(`/${clientData.slug.current}/dashboard`);
   }
 
@@ -72,26 +73,20 @@ export default async function ClientDashboard({ params }: { params: { slug: stri
     clientId: clientData._id
   });
 
-  const handleLogout = async () => {
-    "use server";
-    await destroySession();
-    redirect("/");
-  };
-
   return (
     <div className="min-h-screen pb-24">
       <DashboardClient 
         content={allContent} 
         clientId={clientData._id}
-        clientName={clientData.name}
+        clientName={clientData.name || ""}
         clientSlug={clientData.slug.current}
-        plan={clientData.plan}
-        postersIncluded={clientData.postersIncluded}
-        videosIncluded={clientData.videosIncluded}
-        revisionsIncluded={clientData.revisionsIncluded}
-        revisionsUsed={revisionsUsed}
+        plan={clientData.plan || "Silver"}
+        postersIncluded={clientData.postersIncluded || 0}
+        videosIncluded={clientData.videosIncluded || 0}
+        revisionsIncluded={clientData.revisionsIncluded || 0}
+        revisionsUsed={revisionsUsed || 0}
         isAdmin={isAuthorizedAdmin}
-        logoutAction={handleLogout}
+        logoutAction={logoutAction}
       />
     </div>
   );

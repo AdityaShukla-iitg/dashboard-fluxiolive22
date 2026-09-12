@@ -2,27 +2,44 @@
 
 import { createAdminSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect";
 
 export interface AuthState {
   error?: string;
 }
 
 export async function loginAdmin(prevState: AuthState | null, formData: FormData): Promise<AuthState> {
-  if (!formData || typeof formData.get !== "function") {
-    return { error: "Invalid form submission." };
+  let destinationUrl = "";
+
+  try {
+    if (!formData || typeof formData.get !== "function") {
+      return { error: "Invalid form submission." };
+    }
+
+    const password = (formData.get("password") as string)?.trim() || "";
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!password || !adminPassword) {
+      return { error: "Authentication configuration error." };
+    }
+
+    if (password === adminPassword) {
+      await createAdminSession();
+      destinationUrl = "/admin/clients";
+    } else {
+      return { error: "Invalid admin password." };
+    }
+  } catch (err: unknown) {
+    if (isRedirectError(err)) {
+      throw err;
+    }
+    console.error("Admin login error:", err);
+    return { error: "An unexpected error occurred during sign in." };
   }
 
-  const password = formData.get("password") as string;
-  const adminPassword = process.env.ADMIN_PASSWORD;
-
-  if (!password || !adminPassword) {
-    return { error: "Authentication configuration error." };
+  if (destinationUrl) {
+    redirect(destinationUrl);
   }
 
-  if (password === adminPassword) {
-    await createAdminSession();
-    redirect("/admin/clients");
-  }
-
-  return { error: "Invalid admin password." };
+  return {};
 }

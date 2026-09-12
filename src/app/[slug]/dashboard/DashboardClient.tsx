@@ -36,7 +36,13 @@ export default function DashboardClient({
   logoutAction,
 }: DashboardClientProps) {
   const [content, setContent] = useState<ContentItem[]>(initialContent);
-  const months = Array.from(new Set(content.map((c) => c.month))).sort().reverse();
+  const months = Array.from(
+    new Set(
+      content
+        .map((c) => c.month)
+        .filter((m): m is string => Boolean(m && typeof m === "string"))
+    )
+  ).sort().reverse();
   const [selectedMonth, setSelectedMonth] = useState(months[0] || "");
   const [isClient, setIsClient] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -54,12 +60,24 @@ export default function DashboardClient({
 
   // Group by date
   const groupedByDate = monthContent.reduce((acc, curr) => {
-    if (!acc[curr.date]) acc[curr.date] = [];
-    acc[curr.date].push(curr);
+    const rawDate = curr.date || "undated";
+    if (!acc[rawDate]) acc[rawDate] = [];
+    acc[rawDate].push(curr);
     return acc;
   }, {} as Record<string, ContentItem[]>);
 
   const dates = Object.keys(groupedByDate).sort().reverse();
+
+  const formatDeliverableDate = (dateStr: string) => {
+    try {
+      if (!dateStr || dateStr === "undated") return "Deliverables";
+      const parsed = parseISO(dateStr);
+      if (isNaN(parsed.getTime())) return dateStr;
+      return format(parsed, "MMMM do, yyyy");
+    } catch {
+      return dateStr || "Deliverables";
+    }
+  };
 
   const handleCopyCaption = async (text: string, e: React.MouseEvent<HTMLButtonElement>) => {
     await navigator.clipboard.writeText(text);
@@ -95,9 +113,16 @@ export default function DashboardClient({
 
   // Helper to check if item is recent (added within last 48 hours)
   const isRecentItem = (item: ContentItem) => {
-    const timestamp = item._createdAt ? new Date(item._createdAt).getTime() : new Date(item.date).getTime();
-    const diffHours = (Date.now() - timestamp) / (1000 * 60 * 60);
-    return diffHours >= 0 && diffHours <= 48;
+    try {
+      const rawDate = item._createdAt || item.date;
+      if (!rawDate) return false;
+      const timestamp = new Date(rawDate).getTime();
+      if (isNaN(timestamp)) return false;
+      const diffHours = (Date.now() - timestamp) / (1000 * 60 * 60);
+      return diffHours >= 0 && diffHours <= 48;
+    } catch {
+      return false;
+    }
   };
 
   return (
@@ -288,7 +313,7 @@ export default function DashboardClient({
               <div className="absolute w-2 h-2 bg-brand-red -left-[4px] top-2" />
 
               <h2 className="text-2xl font-display uppercase tracking-widest text-zinc-300 mb-8 flex items-center gap-4">
-                {format(parseISO(date), "MMMM do, yyyy")}
+                {formatDeliverableDate(date)}
                 <span className="text-xs font-mono text-zinc-600 bg-zinc-900 px-2 py-1">[ 0{dayIndex + 1} ]</span>
               </h2>
 

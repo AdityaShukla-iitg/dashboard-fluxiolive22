@@ -126,22 +126,24 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h2 className="text-xl font-display uppercase tracking-wider text-white">{c.name}</h2>
-                  <a 
-                    href={`/${c.slug.current}/dashboard`} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="text-zinc-500 hover:text-brand-green-light font-mono text-xs mt-0.5 inline-block transition-colors"
-                    title="Open Client Dashboard"
-                  >
-                    /{c.slug.current} ↗
-                  </a>
+                  {c.slug?.current && (
+                    <a 
+                      href={`/${c.slug.current}/dashboard`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="text-zinc-500 hover:text-brand-green-light font-mono text-xs mt-0.5 inline-block transition-colors"
+                      title="Open Client Dashboard"
+                    >
+                      /{c.slug.current} ↗
+                    </a>
+                  )}
                 </div>
                 <span className={`px-2 py-1 text-xs font-mono uppercase tracking-wider border ${
                   c.status === 'active' 
                     ? 'text-brand-green-light border-brand-green/40 bg-brand-green/10' 
                     : 'text-zinc-500 border-zinc-800 bg-zinc-950'
                 }`}>
-                  {c.status}
+                  {c.status || "active"}
                 </span>
               </div>
 
@@ -192,22 +194,24 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
             <div className="hidden md:flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-display uppercase tracking-wider">{c.name}</h2>
-                <a 
-                  href={`/${c.slug.current}/dashboard`} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="text-zinc-500 hover:text-brand-green-light font-mono text-xs mt-1 inline-block transition-colors"
-                  title="Open Client Dashboard"
-                >
-                  /{c.slug.current} ↗
-                </a>
+                {c.slug?.current && (
+                  <a 
+                    href={`/${c.slug.current}/dashboard`} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="text-zinc-500 hover:text-brand-green-light font-mono text-xs mt-1 inline-block transition-colors"
+                    title="Open Client Dashboard"
+                  >
+                    /{c.slug.current} ↗
+                  </a>
+                )}
               </div>
               
               <div className="flex items-center gap-4 text-sm font-sans text-zinc-400">
                 <span className="bg-zinc-950 px-2 py-1 border border-zinc-800">{c.plan}</span>
                 <span>{c.postersIncluded}P / {c.videosIncluded}V</span>
                 <span className={`px-2 py-1 ${c.status === 'active' ? 'text-brand-green-light' : 'text-zinc-500'}`}>
-                  {c.status.toUpperCase()}
+                  {(c.status || "active").toUpperCase()}
                 </span>
               </div>
 
@@ -254,7 +258,7 @@ export default function ClientManager({ initialClients }: { initialClients: Clie
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-mono uppercase text-zinc-400">Slug</label>
-                  <input name="slug" required defaultValue={editingClient?.slug.current} className="w-full bg-zinc-900 border border-zinc-800 p-3 sm:p-2 font-sans text-base sm:text-sm text-white" />
+                  <input name="slug" required defaultValue={editingClient?.slug?.current || ""} className="w-full bg-zinc-900 border border-zinc-800 p-3 sm:p-2 font-sans text-base sm:text-sm text-white" />
                 </div>
               </div>
 
