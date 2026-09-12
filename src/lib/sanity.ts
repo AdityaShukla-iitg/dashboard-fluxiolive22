@@ -1,4 +1,4 @@
-import { createClient } from "next-sanity";
+import { createClient } from "@sanity/client";
 
 // We use the same environment variables as the main project,
 // but we pass them explicitly or assume they're in .env.local
