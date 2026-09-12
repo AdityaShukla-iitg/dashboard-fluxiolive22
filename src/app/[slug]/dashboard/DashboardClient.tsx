@@ -45,6 +45,7 @@ export default function DashboardClient({
   const [copiedLink, setCopiedLink] = useState(false);
   const [revisionItem, setRevisionItem] = useState<ContentItem | null>(null);
   const [expandedCaptions, setExpandedCaptions] = useState<Record<string, boolean>>({});
+  const [playingReels, setPlayingReels] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setIsClient(true);
@@ -309,9 +310,33 @@ export default function DashboardClient({
                       }`}
                     >
                       {/* Media Preview Area */}
-                      <div className="w-full bg-zinc-950 relative border-b border-zinc-800 flex flex-col items-center justify-center">
-                        {(() => {
-                          if (item.assetType === "reel" && item.driveLink) {
+                        <div className="w-full bg-zinc-950 relative border-b border-zinc-800 flex flex-col items-center justify-center group/preview">
+                          {(() => {
+                            const isPlaying = playingReels[item._id];
+
+                            if (item.assetType === "reel" && item.driveLink) {
+                              if (!isPlaying) {
+                                return (
+                                  <div 
+                                    className="w-full relative cursor-pointer flex flex-col items-center justify-center bg-zinc-950 overflow-hidden"
+                                    onClick={() => setPlayingReels(prev => ({ ...prev, [item._id]: true }))}
+                                  >
+                                    {previewImage ? (
+                                      <img src={previewImage} alt="Thumbnail" className="w-full h-auto object-contain transition-opacity hover:opacity-80 opacity-90" />
+                                    ) : (
+                                      <div className="w-full aspect-[9/16] md:aspect-video flex items-center justify-center text-zinc-700 font-mono text-sm uppercase tracking-widest bg-zinc-900">
+                                        Click to Play Video
+                                      </div>
+                                    )}
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                      <div className="bg-brand-green text-black rounded-full p-4 transform scale-100 transition-transform shadow-[0_0_30px_rgba(34,197,94,0.4)] flex items-center justify-center group-hover/preview:scale-110">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              }
+
                               const isDrive = item.driveLink.includes("drive.google.com");
                               if (isDrive) {
                                 const embedUrl = item.driveLink.replace(/\/view(\?.*)?$/, "/preview");
@@ -320,7 +345,7 @@ export default function DashboardClient({
                                 );
                               } else if (item.driveLink.endsWith(".mp4") || item.driveLink.includes("mixkit") || item.driveLink.endsWith(".webm") || item.driveLink.endsWith(".webp")) {
                                 return (
-                                  <video src={item.driveLink} controls className="w-full h-auto max-h-[80vh] object-contain" />
+                                  <video src={item.driveLink} autoPlay controls className="w-full h-auto max-h-[80vh] object-contain" />
                                 );
                               }
                             }
@@ -335,14 +360,12 @@ export default function DashboardClient({
                               );
                             }
                             
-                            
-                            
                             return (
                               <div className="aspect-video w-full flex items-center justify-center text-zinc-700 font-mono text-sm uppercase tracking-widest">
-                              No Preview
-                            </div>
-                          );
-                        })()}
+                                No Preview
+                              </div>
+                            );
+                          })()}
 
                         {/* Top Badges */}
                         <div className="absolute top-4 left-4 flex items-center gap-2">
