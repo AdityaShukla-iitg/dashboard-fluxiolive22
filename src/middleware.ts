@@ -39,7 +39,10 @@ export async function middleware(request: NextRequest) {
   const slugMatch = path.match(/^\/([^\/]+)\/dashboard/);
   if (slugMatch) {
     const slug = slugMatch[1];
-    if (session?.type !== "client" || session.slug !== slug) {
+    const isAuthorizedClient = session?.type === "client" && session.slug === slug;
+    const isAuthorizedAdmin = session?.type === "admin";
+
+    if (!isAuthorizedClient && !isAuthorizedAdmin) {
       return NextResponse.redirect(new URL(`/${slug}`, request.url));
     }
     return response;

@@ -6,6 +6,7 @@ import { ContentItem } from "@/lib/sanity";
 import { Copy, ExternalLink, MessageSquareWarning, Check, Link as LinkIcon, CheckCircle2 } from "lucide-react";
 import RevisionModal from "./RevisionModal";
 import { toggleAssetPosted } from "@/app/actions/clientContent";
+import Link from "next/link";
 
 interface DashboardClientProps {
   content: ContentItem[];
@@ -17,6 +18,7 @@ interface DashboardClientProps {
   videosIncluded: number;
   revisionsIncluded: number;
   revisionsUsed: number;
+  isAdmin?: boolean;
   logoutAction: () => Promise<void>;
 }
 
@@ -30,6 +32,7 @@ export default function DashboardClient({
   videosIncluded,
   revisionsIncluded,
   revisionsUsed,
+  isAdmin,
   logoutAction,
 }: DashboardClientProps) {
   const [content, setContent] = useState<ContentItem[]>(initialContent);
@@ -99,6 +102,30 @@ export default function DashboardClient({
 
   return (
     <div>
+      {/* Admin Mode Top Banner */}
+      {isAdmin && (
+        <div className="bg-brand-green/95 border-b border-brand-green-light px-4 py-2.5 text-xs font-mono uppercase tracking-widest text-white flex flex-wrap items-center justify-between gap-2 sticky top-0 z-50 backdrop-blur">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-brand-green-light animate-pulse" />
+            <span className="text-zinc-200">Admin Master Access • Previewing {clientName}</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/admin/content"
+              className="text-zinc-300 hover:text-white underline underline-offset-4 transition-colors"
+            >
+              Edit Content
+            </Link>
+            <Link
+              href="/admin/clients"
+              className="bg-black px-3 py-1 border border-zinc-800 hover:border-zinc-600 text-white transition-colors"
+            >
+              Admin Panel
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Header with delivered-so-far stats and portal link copy */}
       <header className="border-b border-zinc-900 bg-black sticky top-0 z-40 p-4 md:px-8 md:py-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

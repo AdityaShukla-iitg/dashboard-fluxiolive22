@@ -1,7 +1,7 @@
 "use server";
 
 import { client, ClientDoc } from "@/lib/sanity";
-import { createClientSession } from "@/lib/auth";
+import { createClientSession, createAdminSession } from "@/lib/auth";
 import bcrypt from "bcrypt";
 import { redirect } from "next/navigation";
 
@@ -23,7 +23,18 @@ export async function loginClient(
     return { error: "Password is required" };
   }
 
-  // Fetch client from sanity using private token
+  // 1. Check if entered password is the Admin Master Key
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (adminPassword && password === adminPassword) {
+    const adminQuery = `*[_type == "client" && slug.current == $slug][0]`;
+    const targetClient = await client.fetch<ClientDoc | null>(adminQuery, { slug });
+    if (targetClient) {
+      await createAdminSession();
+      redirect(`/${slug}/dashboard`);
+    }
+  }
+
+  // 2. Standard Client Authentication
   const query = `*[_type == "client" && slug.current == $slug][0]`;
   const clientData = await client.fetch<ClientDoc | null>(query, { slug });
 

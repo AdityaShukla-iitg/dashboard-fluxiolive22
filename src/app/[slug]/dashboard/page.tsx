@@ -6,7 +6,10 @@ import DashboardClient from "./DashboardClient";
 export default async function ClientDashboard({ params }: { params: { slug: string } }) {
   const session = await getSession();
   
-  if (!session || session.type !== "client" || session.slug !== params.slug) {
+  const isAuthorizedClient = session?.type === "client" && session.slug === params.slug;
+  const isAuthorizedAdmin = session?.type === "admin";
+
+  if (!session || (!isAuthorizedClient && !isAuthorizedAdmin)) {
     redirect(`/${params.slug}`);
   }
 
@@ -14,7 +17,11 @@ export default async function ClientDashboard({ params }: { params: { slug: stri
   const clientQuery = `*[_type == "client" && slug.current == $slug][0]`;
   const clientData = await sanityClient.fetch<ClientDoc>(clientQuery, { slug: params.slug });
 
-  if (!clientData || clientData.status === "paused") {
+  if (!clientData) {
+    redirect(`/${params.slug}`);
+  }
+
+  if (clientData.status === "paused" && !isAuthorizedAdmin) {
     redirect(`/${params.slug}`);
   }
 
@@ -59,6 +66,7 @@ export default async function ClientDashboard({ params }: { params: { slug: stri
         videosIncluded={clientData.videosIncluded}
         revisionsIncluded={clientData.revisionsIncluded}
         revisionsUsed={revisionsUsed}
+        isAdmin={isAuthorizedAdmin}
         logoutAction={handleLogout}
       />
     </div>
