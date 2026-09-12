@@ -43,3 +43,10 @@ button {
   animation: toast-progress 4.5s linear forwards;
 }
 
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}

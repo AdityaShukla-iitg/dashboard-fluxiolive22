@@ -129,7 +129,7 @@ export default function DashboardClient({
     <div className="w-full overflow-x-hidden">
       {/* Responsive Header for Mobile and Desktop */}
       <header className="border-b border-zinc-900 bg-black sticky top-0 z-40 p-4 md:px-8 md:py-6">
-        <div className="max-w-[1300px] mx-auto">
+        <div className="w-full">
           {/* Smartphone Header View (< md) */}
           <div className="md:hidden space-y-4">
             <div className="flex items-center justify-between gap-3">
@@ -257,7 +257,7 @@ export default function DashboardClient({
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-[1300px] mx-auto p-4 md:px-8 mt-8">
+      <main className="max-w-6xl mx-auto p-4 md:px-8 mt-8">
         {/* Month Selector */}
         {months.length > 0 && (
           <div className="mb-12 flex items-center justify-between">
@@ -282,7 +282,36 @@ export default function DashboardClient({
           </div>
         )}
 
-        {/* Deliverables Grid */}
+        
+          {/* Timeline / Calendar Scrub */}
+          {dates.length > 0 && isClient && (
+            <div className="mb-12">
+              <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide snap-x">
+                {dates.map(date => {
+                  const d = parseISO(date);
+                  return (
+                    <button
+                      key={date}
+                      onClick={() => {
+                        const el = document.getElementById(`date-${date}`);
+                        if (el) {
+                          const y = el.getBoundingClientRect().top + window.scrollY - 120;
+                          window.scrollTo({ top: y, behavior: 'smooth' });
+                        }
+                      }}
+                      className="flex-shrink-0 flex flex-col items-center justify-center w-[80px] h-[88px] bg-zinc-950 border border-zinc-900 hover:border-brand-green/50 hover:bg-zinc-900/80 transition-all snap-center group rounded-md cursor-pointer"
+                    >
+                      <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest group-hover:text-brand-green transition-colors">{format(d, 'MMM')}</span>
+                      <span className="text-3xl font-display text-zinc-300 group-hover:text-white transition-colors mt-1">{format(d, 'dd')}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="h-px w-full bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 mt-2" />
+            </div>
+          )}
+
+          {/* Deliverables Grid */}
         {!isClient ? (
             <div className="space-y-16 animate-pulse mt-8">
               {[1].map((i) => (
@@ -315,7 +344,7 @@ export default function DashboardClient({
         ) : (
         <div className="space-y-16 transition-opacity duration-700 opacity-100">
           {dates.map((date, dayIndex) => (
-            <div key={date} className="relative pl-4 md:pl-8 border-l border-zinc-800">
+            <div key={date} id={`date-${date}`} className="relative pl-4 md:pl-8 border-l border-zinc-800 pt-8 mt-[-2rem]">
               <div className="absolute w-2 h-2 bg-brand-red -left-[4px] top-2" />
 
               <h2 className="text-2xl font-display uppercase tracking-widest text-zinc-300 mb-8 flex items-center gap-4">
