@@ -1,7 +1,7 @@
 "use server";
 
 import { client } from "@/lib/sanity";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 
 export async function toggleClientStatus(clientId: string, currentStatus: string) {
