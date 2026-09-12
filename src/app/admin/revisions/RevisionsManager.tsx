@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { toggleRevisionStatus, deleteRevision } from "@/app/actions/adminRevisions";
+import { toggleRevisionStatus, deleteRevision, clearAllResolvedRevisions } from "@/app/actions/adminRevisions";
 import { format, parseISO } from "date-fns";
 import { ExternalLink, CheckCircle, Circle, Paperclip, LayoutDashboard, HardDrive, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -40,13 +40,27 @@ export interface RevisionItem {
 export default function RevisionsManager({ initialRevisions }: { initialRevisions: RevisionItem[] }) {
   const router = useRouter();
   const [revisions, setRevisions] = useState<RevisionItem[]>(initialRevisions);
+  const [filter, setFilter] = useState<"all" | "open" | "resolved">("all");
 
-  // Delete modal state
+  // Single delete modal state
   const [revisionToDelete, setRevisionToDelete] = useState<RevisionItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Clear all solved modal state
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
+  const [isClearingAll, setIsClearingAll] = useState(false);
+
   // Toast notification state
   const [toast, setToast] = useState<ToastMessage | null>(null);
+
+  const openCount = revisions.filter(r => r.status === "open").length;
+  const resolvedCount = revisions.filter(r => r.status === "resolved").length;
+
+  const displayedRevisions = revisions.filter(r => {
+    if (filter === "open") return r.status === "open";
+    if (filter === "resolved") return r.status === "resolved";
+    return true;
+  });
 
   const handleToggle = async (id: string, currentStatus: string) => {
     const nextStatus = currentStatus === "open" ? "resolved" : "open";
@@ -86,7 +100,33 @@ export default function RevisionsManager({ initialRevisions }: { initialRevision
         id: Date.now().toString(),
         type: "delete",
         title: "REVISION DELETED",
-        message: `Revision note for "${clientName}" has been removed.`,
+        message: `Revision note for "${clientName}" has been permanently removed.`,
+      });
+      router.refresh();
+    }
+  };
+
+  const handleClearAllResolved = async () => {
+    setIsClearingAll(true);
+    const res = await clearAllResolvedRevisions();
+    setIsClearingAll(false);
+    setConfirmClearAll(false);
+
+    if (res?.error) {
+      setToast({
+        id: Date.now().toString(),
+        type: "error",
+        title: "CLEAR FAILED",
+        message: res.error,
+      });
+    } else {
+      const removedCount = res.count || resolvedCount;
+      setRevisions(prev => prev.filter(r => r.status !== "resolved"));
+      setToast({
+        id: Date.now().toString(),
+        type: "delete",
+        title: "SOLVED REVISIONS CLEARED",
+        message: `${removedCount} solved revision${removedCount === 1 ? "" : "s"} permanently deleted.`,
       });
       router.refresh();
     }
@@ -94,30 +134,74 @@ export default function RevisionsManager({ initialRevisions }: { initialRevision
 
   return (
     <div className="p-4 md:p-8">
-      <div className="flex justify-between items-center mb-8">
+      {/* Header and Controls */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-display uppercase tracking-widest">Revisions</h1>
+          <h1 className="text-2xl sm:text-3xl font-display uppercase tracking-widest">Revisions</h1>
           <p className="text-zinc-500 font-sans text-xs uppercase tracking-wider mt-1">
-            Incoming revision notes with asset preview, client portal links, and Drive URLs
+            Review, solve, and delete client revision notes
           </p>
+        </div>
+
+        {/* Filter Tabs and Clear Solved Action */}
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <div className="flex bg-zinc-900 border border-zinc-800 p-1">
+            <button
+              onClick={() => setFilter("all")}
+              className={`px-3 py-1 text-xs font-mono uppercase tracking-wider transition-colors ${
+                filter === "all" ? "bg-black text-white" : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              All ({revisions.length})
+            </button>
+            <button
+              onClick={() => setFilter("open")}
+              className={`px-3 py-1 text-xs font-mono uppercase tracking-wider transition-colors ${
+                filter === "open" ? "bg-black text-amber-400" : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              Open ({openCount})
+            </button>
+            <button
+              onClick={() => setFilter("resolved")}
+              className={`px-3 py-1 text-xs font-mono uppercase tracking-wider transition-colors ${
+                filter === "resolved" ? "bg-black text-brand-green-light" : "text-zinc-400 hover:text-white"
+              }`}
+            >
+              Solved ({resolvedCount})
+            </button>
+          </div>
+
+          {resolvedCount > 0 && (
+            <button
+              onClick={() => setConfirmClearAll(true)}
+              className="bg-brand-red/10 border border-brand-red/40 hover:bg-brand-red/20 text-brand-red px-3 py-2 text-xs font-mono uppercase tracking-wider flex items-center gap-1.5 transition-colors min-h-[36px]"
+              title="Delete all solved revisions"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Clear Solved ({resolvedCount})</span>
+            </button>
+          )}
         </div>
       </div>
 
+      {/* Revision Cards List */}
       <div className="grid grid-cols-1 gap-6">
-        {revisions.map((r) => {
+        {displayedRevisions.map((r) => {
           const clientSlug = r.client?.slug?.current;
           const previewImage = r.contentItem?.thumbnail?.asset?.url || r.contentItem?.thumbnailLink;
+          const isResolved = r.status === "resolved";
 
           return (
             <div
               key={r._id}
               className={`p-4 sm:p-6 border flex flex-col gap-5 sm:gap-6 transition-colors ${
-                r.status === "resolved"
-                  ? "bg-zinc-950/60 border-zinc-900 opacity-75"
+                isResolved
+                  ? "bg-zinc-950/60 border-zinc-900 opacity-80"
                   : "bg-zinc-900 border-zinc-800"
               }`}
             >
-              {/* Card Header: Client info and resolved toggle */}
+              {/* Card Header: Client info and action buttons */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -142,15 +226,16 @@ export default function RevisionsManager({ initialRevisions }: { initialRevision
                 </div>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto">
+                  {/* Mark Resolved Toggle */}
                   <button
                     onClick={() => handleToggle(r._id, r.status)}
                     className={`flex-1 sm:flex-initial min-h-[44px] flex items-center justify-center gap-2 text-xs font-mono uppercase tracking-widest px-4 py-2 border transition-colors ${
-                      r.status === "resolved"
+                      isResolved
                         ? "border-brand-green text-brand-green-light bg-brand-green/20"
                         : "border-zinc-700 text-zinc-300 hover:text-white hover:border-white bg-zinc-950"
                     }`}
                   >
-                    {r.status === "resolved" ? (
+                    {isResolved ? (
                       <>
                         <CheckCircle className="w-4 h-4 text-brand-green-light" />
                         <span>Resolved</span>
@@ -163,16 +248,39 @@ export default function RevisionsManager({ initialRevisions }: { initialRevision
                     )}
                   </button>
 
+                  {/* Delete Revision Button (Prominent when resolved) */}
                   <button
                     onClick={() => setRevisionToDelete(r)}
-                    className="min-h-[44px] px-3.5 py-2 bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-brand-red hover:border-brand-red/50 transition-colors flex items-center justify-center"
-                    title="Delete Revision"
+                    className={`min-h-[44px] px-3.5 py-2 border transition-colors flex items-center justify-center gap-1.5 text-xs font-mono uppercase tracking-wider ${
+                      isResolved
+                        ? "bg-brand-red/10 border-brand-red/40 hover:bg-brand-red hover:text-white text-brand-red"
+                        : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-brand-red hover:border-brand-red/50"
+                    }`}
+                    title={isResolved ? "Delete Solved Revision" : "Delete Revision"}
                     aria-label="Delete revision request"
                   >
                     <Trash2 className="w-4 h-4" />
+                    {isResolved && <span className="hidden sm:inline">Delete Solved</span>}
                   </button>
                 </div>
               </div>
+
+              {/* Solved Revision Quick Action Banner */}
+              {isResolved && (
+                <div className="bg-brand-green/10 border border-brand-green/30 p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-xs font-sans text-brand-green-light">
+                    <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>This revision has been marked as solved.</span>
+                  </div>
+                  <button
+                    onClick={() => setRevisionToDelete(r)}
+                    className="text-xs font-mono uppercase tracking-wider text-brand-red hover:underline flex items-center gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete this solved revision
+                  </button>
+                </div>
+              )}
 
               {/* Target Asset Information Box */}
               {r.contentItem ? (
@@ -283,7 +391,7 @@ export default function RevisionsManager({ initialRevisions }: { initialRevision
         )}
       </div>
 
-      {/* Delete Confirmation Popup Modal */}
+      {/* Delete Confirmation Popup Modal (Single) */}
       <DeleteConfirmModal
         isOpen={Boolean(revisionToDelete)}
         title="DELETE REVISION REQUEST"
@@ -297,6 +405,18 @@ export default function RevisionsManager({ initialRevisions }: { initialRevision
         isDeleting={isDeleting}
         onConfirm={handleConfirmDelete}
         onCancel={() => setRevisionToDelete(null)}
+      />
+
+      {/* Delete Confirmation Popup Modal (Clear All Solved) */}
+      <DeleteConfirmModal
+        isOpen={confirmClearAll}
+        title="CLEAR ALL SOLVED REVISIONS"
+        itemName={`All ${resolvedCount} Solved Revisions`}
+        itemType="all solved revision records"
+        description={`Are you sure you want to permanently delete all ${resolvedCount} solved revision notes? This action cannot be undone.`}
+        isDeleting={isClearingAll}
+        onConfirm={handleClearAllResolved}
+        onCancel={() => setConfirmClearAll(false)}
       />
 
       {/* Floating Notification Toast UI */}

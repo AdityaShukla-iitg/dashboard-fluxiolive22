@@ -20,3 +20,20 @@ export async function deleteRevision(id: string) {
   }
 }
 
+export async function clearAllResolvedRevisions() {
+  try {
+    const resolvedIds = await client.fetch<string[]>(
+      `*[_type == "revisionRequest" && status == "resolved"]._id`
+    );
+    for (const id of resolvedIds) {
+      await client.delete(id);
+    }
+    revalidatePath("/admin/revisions");
+    return { success: true, count: resolvedIds.length };
+  } catch (err) {
+    console.error("Failed to clear resolved revisions:", err);
+    return { error: "Failed to clear resolved revisions." };
+  }
+}
+
+
