@@ -144,7 +144,7 @@ export default function ContentManager({
                 <img 
                   src={item.thumbnail?.asset?.url || item.thumbnailLink} 
                   alt="Thumb" 
-                  className="w-full h-full object-cover opacity-80" 
+                  className="w-full h-full object-cover" 
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-zinc-700 font-mono text-xs uppercase tracking-widest">

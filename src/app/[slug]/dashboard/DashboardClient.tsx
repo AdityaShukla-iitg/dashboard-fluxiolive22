@@ -304,7 +304,7 @@ export default function DashboardClient({
                       key={item._id}
                       className={`border transition-all flex flex-col ${
                         item.isPosted
-                          ? "bg-zinc-950/70 border-zinc-900 opacity-80"
+                          ? "bg-zinc-950/70 border-zinc-900 opacity-100"
                           : "bg-zinc-900/50 border-zinc-800"
                       }`}
                     >
@@ -330,7 +330,7 @@ export default function DashboardClient({
                               <img
                                 src={previewImage}
                                 alt="Thumbnail"
-                                className="w-full h-auto object-contain opacity-90"
+                                className="w-full h-auto object-contain"
                               />
                             );
                           }
