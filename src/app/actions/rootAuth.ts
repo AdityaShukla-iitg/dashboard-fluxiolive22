@@ -4,7 +4,6 @@ import { client, ClientDoc } from "@/lib/sanity";
 import { createClientSession, createAdminSession } from "@/lib/auth";
 import bcrypt from "bcrypt";
 import { redirect } from "next/navigation";
-import { isRedirectError } from "next/dist/client/components/redirect";
 
 export interface RootAuthState {
   error?: string;
@@ -115,9 +114,6 @@ export async function loginRoot(
       destinationUrl = `/${clientData.slug.current}/dashboard`;
     }
   } catch (err: unknown) {
-    if (isRedirectError(err)) {
-      throw err;
-    }
     console.error("Root login error:", err);
     return { error: "An unexpected error occurred during sign in. Please try again." };
   }

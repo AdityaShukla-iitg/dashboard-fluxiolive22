@@ -2,7 +2,6 @@
 
 import { createAdminSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { isRedirectError } from "next/dist/client/components/redirect";
 
 export interface AuthState {
   error?: string;
@@ -30,9 +29,6 @@ export async function loginAdmin(prevState: AuthState | null, formData: FormData
       return { error: "Invalid admin password." };
     }
   } catch (err: unknown) {
-    if (isRedirectError(err)) {
-      throw err;
-    }
     console.error("Admin login error:", err);
     return { error: "An unexpected error occurred during sign in." };
   }

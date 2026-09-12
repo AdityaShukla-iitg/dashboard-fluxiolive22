@@ -4,7 +4,6 @@ import { client, ClientDoc } from "@/lib/sanity";
 import { createClientSession, createAdminSession } from "@/lib/auth";
 import bcrypt from "bcrypt";
 import { redirect } from "next/navigation";
-import { isRedirectError } from "next/dist/client/components/redirect";
 
 export interface ClientAuthState {
   error?: string;
@@ -80,9 +79,6 @@ export async function loginClient(
       destinationUrl = `/${targetClient.slug.current}/dashboard`;
     }
   } catch (err: unknown) {
-    if (isRedirectError(err)) {
-      throw err;
-    }
     console.error("Client login error:", err);
     return { error: "An unexpected error occurred during sign in. Please try again." };
   }
