@@ -1,6 +1,6 @@
-﻿"use server";
+"use server";
 import { createClientSession, createAdminSession } from "@/lib/auth";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { client, ClientDoc } from "@/lib/sanity";
 
 export interface RootAuthState {
