@@ -328,7 +328,13 @@ export default function DashboardClient({
                   const hasOpenRevision = item.activeRevision?.status === "open";
                   const hasResolvedRevision = item.activeRevision?.status === "resolved";
                   const isNew = isRecentItem(item);
-                  const previewImage = item.thumbnail?.asset?.url || item.thumbnailLink;
+                  let previewImage = item.thumbnail?.asset?.url || item.thumbnailLink;
+                    if (!previewImage && item.driveLink && item.driveLink.includes("drive.google.com")) {
+                        const match = item.driveLink.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                        if (match) {
+                            previewImage = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+                        }
+                    }
                   const downloadUrl = item.driveLink || (item.thumbnail?.asset?.url ? (item.thumbnail.asset.url + "?dl=") : "#");
 
                   return (
