@@ -140,7 +140,7 @@ export default function ContentManager({
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
         {filteredContent.map(item => (
           <div key={item._id} className="bg-zinc-900 border border-zinc-800 flex flex-col">
-            <div className="aspect-video w-full bg-zinc-950 border-b border-zinc-800 relative">
+            <div className="aspect-video w-full bg-zinc-950 border-b border-zinc-800 relative overflow-hidden">
               {(() => {
                 const ytId = getYouTubeId(item.thumbnailLink) || getYouTubeId(item.driveLink);
                 const thumbUrl = item.thumbnail?.asset?.url || (ytId ? getYouTubeThumbnail(ytId, false) : (item.thumbnailLink && !item.thumbnailLink.includes("youtube.com") && !item.thumbnailLink.includes("youtu.be") ? item.thumbnailLink : null));
@@ -153,11 +153,7 @@ export default function ContentManager({
                         alt="Thumb" 
                         className="w-full h-full object-cover" 
                       />
-                      {ytId && (
-                        <div className="absolute bottom-2 left-2 bg-red-600 text-white px-1.5 py-0.5 text-[9px] font-mono uppercase font-bold rounded shadow">
-                          YouTube HD
-                        </div>
-                      )}
+
                     </>
                   );
                 }
@@ -269,9 +265,9 @@ export default function ContentManager({
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-mono uppercase text-zinc-400">Video Stream Link (YouTube) or External Thumbnail</label>
-                <input name="thumbnailLink" type="url" defaultValue={editingItem?.thumbnailLink} className="w-full bg-zinc-900 border border-zinc-800 p-3 sm:p-2 font-sans text-base sm:text-sm text-white" placeholder="https://www.youtube.com/watch?v=... or image URL" />
-                <p className="text-[11px] font-sans text-zinc-500">Paste YouTube link here for smooth streaming playback. Download button will use Google Drive.</p>
+                <label className="text-xs font-mono uppercase text-zinc-400">Stream Link or External Thumbnail</label>
+                <input name="thumbnailLink" type="url" defaultValue={editingItem?.thumbnailLink} className="w-full bg-zinc-900 border border-zinc-800 p-3 sm:p-2 font-sans text-base sm:text-sm text-white" placeholder="https://... (video stream link or image URL)" />
+                <p className="text-[11px] font-sans text-zinc-500">Paste stream link here for high quality playback. Master download button will use Google Drive.</p>
               </div>
 
               <div className="space-y-1">

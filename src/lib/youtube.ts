@@ -23,5 +23,5 @@ export function getYouTubeThumbnail(youtubeId: string, highRes = true): string {
 }
 
 export function getYouTubeEmbedUrl(youtubeId: string): string {
-  return `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+  return `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3&playsinline=1`;
 }

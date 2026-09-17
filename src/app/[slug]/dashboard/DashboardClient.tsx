@@ -6,7 +6,7 @@ import { ContentItem } from "@/lib/sanity";
 import { Copy, MessageSquareWarning, Check, Link as LinkIcon, CheckCircle2, Download } from "lucide-react";
 import RevisionModal from "./RevisionModal";
 import { toggleAssetPosted } from "@/app/actions/clientContent";
-import { getYouTubeId, isYouTubeShort, getYouTubeThumbnail, getYouTubeEmbedUrl } from "@/lib/youtube";
+import { getYouTubeId, getYouTubeThumbnail, getYouTubeEmbedUrl } from "@/lib/youtube";
 
 interface DashboardClientProps {
   content: ContentItem[];
@@ -361,7 +361,7 @@ export default function DashboardClient({
                   const ytIdFromSecond = getYouTubeId(item.thumbnailLink);
                   const ytIdFromPrimary = getYouTubeId(item.driveLink);
                   const youtubeId = ytIdFromSecond || ytIdFromPrimary;
-                  const isShort = isYouTubeShort(item.thumbnailLink) || isYouTubeShort(item.driveLink);
+                  
 
                   let previewImage = item.thumbnail?.asset?.url;
                   if (!previewImage) {
@@ -394,11 +394,11 @@ export default function DashboardClient({
                             const isPlaying = playingReels[item._id];
 
                             if (item.assetType === "reel" && (youtubeId || item.driveLink)) {
-                              // If they provided a thumbnail (or YouTube thumbnail), use the click-to-play overlay
+                              // If they provided a thumbnail, use the click-to-play overlay formatted to 9:16
                               if (previewImage && !isPlaying) {
                                 return (
                                   <div 
-                                    className="w-full relative cursor-pointer flex flex-col items-center justify-center bg-zinc-950 overflow-hidden"
+                                    className="w-full aspect-[9/16] relative cursor-pointer flex flex-col items-center justify-center bg-zinc-950 overflow-hidden"
                                     onClick={() => setPlayingReels(prev => ({ ...prev, [item._id]: true }))}
                                   >
                                     <img 
@@ -409,29 +409,24 @@ export default function DashboardClient({
                                           e.currentTarget.src = getYouTubeThumbnail(youtubeId, false);
                                         }
                                       }}
-                                      className="w-full h-auto object-contain transition-opacity hover:opacity-80 opacity-90" 
+                                      className="w-full h-full object-cover transition-opacity hover:opacity-80 opacity-95" 
                                     />
                                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                       <div className="bg-brand-green text-black rounded-full p-4 transform scale-100 transition-transform shadow-[0_0_30px_rgba(34,197,94,0.4)] flex items-center justify-center group-hover/preview:scale-110">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                                       </div>
                                     </div>
-                                    {youtubeId && (
-                                      <div className="absolute bottom-3 right-3 bg-red-600/90 text-white text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded font-bold pointer-events-none shadow-md">
-                                        YouTube HD
-                                      </div>
-                                    )}
                                   </div>
                                 );
                               }
 
-                              // When playing, prioritize YouTube if provided (super smooth, no drive lag!)
+                              // When playing, clean 9:16 video playback without branding badges
                               if (youtubeId) {
                                 return (
                                   <iframe 
                                     src={getYouTubeEmbedUrl(youtubeId)}
-                                    title="YouTube Video Player"
-                                    className={`w-full ${isShort ? "aspect-[9/16] max-h-[75vh]" : "aspect-video"} border-none`}
+                                    title="Video Player"
+                                    className="w-full aspect-[9/16] border-none max-h-[85vh]"
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                     allowFullScreen 
                                   />
@@ -442,11 +437,11 @@ export default function DashboardClient({
                               if (isDrive) {
                                 const embedUrl = item.driveLink.replace(/\/view(\?.*)?$/, "/preview");
                                 return (
-                                  <iframe src={embedUrl} className="w-full aspect-square md:aspect-video border-none max-h-[70vh]" allow="autoplay" allowFullScreen />
+                                  <iframe src={embedUrl} className="w-full aspect-[9/16] border-none max-h-[85vh]" allow="autoplay" allowFullScreen />
                                 );
                               } else if (item.driveLink && (item.driveLink.endsWith(".mp4") || item.driveLink.includes("mixkit") || item.driveLink.endsWith(".webm") || item.driveLink.endsWith(".webp"))) {
                                 return (
-                                  <video src={item.driveLink} autoPlay controls className="w-full h-auto max-h-[80vh] object-contain" />
+                                  <video src={item.driveLink} autoPlay controls className="w-full aspect-[9/16] object-cover max-h-[85vh]" />
                                 );
                               }
                             }
@@ -456,13 +451,13 @@ export default function DashboardClient({
                                 <img
                                   src={previewImage}
                                   alt="Thumbnail"
-                                  className="w-full h-auto object-contain"
+                                  className={`w-full ${item.assetType === "reel" ? "aspect-[9/16] object-cover" : "h-auto object-contain"}`}
                                 />
                               );
                             }
                             
                             return (
-                              <div className="aspect-video w-full flex items-center justify-center text-zinc-700 font-mono text-sm uppercase tracking-widest">
+                              <div className={`${item.assetType === "reel" ? "aspect-[9/16]" : "aspect-video"} w-full flex items-center justify-center text-zinc-700 font-mono text-sm uppercase tracking-widest`}>
                                 No Preview
                               </div>
                             );
