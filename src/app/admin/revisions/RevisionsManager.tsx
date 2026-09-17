@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toggleRevisionStatus, deleteRevision, clearAllResolvedRevisions } from "@/app/actions/adminRevisions";
+import { getYouTubeId, getYouTubeThumbnail } from "@/lib/youtube";
 import { format, parseISO } from "date-fns";
 import { ExternalLink, CheckCircle, Circle, Paperclip, LayoutDashboard, HardDrive, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -200,7 +201,8 @@ export default function RevisionsManager({ initialRevisions }: { initialRevision
       <div className="grid grid-cols-1 gap-6">
         {displayedRevisions.map((r) => {
           const clientSlug = r.client?.slug?.current;
-          const previewImage = r.contentItem?.thumbnail?.asset?.url || r.contentItem?.thumbnailLink;
+          const ytId = getYouTubeId(r.contentItem?.thumbnailLink) || getYouTubeId(r.contentItem?.driveLink);
+          const previewImage = r.contentItem?.thumbnail?.asset?.url || (ytId ? getYouTubeThumbnail(ytId, false) : (r.contentItem?.thumbnailLink && !r.contentItem.thumbnailLink.includes("youtube.com") && !r.contentItem.thumbnailLink.includes("youtu.be") ? r.contentItem.thumbnailLink : null));
           const isResolved = r.status === "resolved";
 
           return (

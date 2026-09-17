@@ -6,6 +6,7 @@ import { ContentItem } from "@/lib/sanity";
 import { Copy, MessageSquareWarning, Check, Link as LinkIcon, CheckCircle2, Download } from "lucide-react";
 import RevisionModal from "./RevisionModal";
 import { toggleAssetPosted } from "@/app/actions/clientContent";
+import { getYouTubeId, isYouTubeShort, getYouTubeThumbnail, getYouTubeEmbedUrl } from "@/lib/youtube";
 
 interface DashboardClientProps {
   content: ContentItem[];
@@ -355,13 +356,27 @@ export default function DashboardClient({
                   const hasOpenRevision = item.activeRevision?.status === "open";
                   const hasResolvedRevision = item.activeRevision?.status === "resolved";
                   const isNew = isRecentItem(item);
-                  let previewImage = item.thumbnail?.asset?.url || item.thumbnailLink;
-                    if (!previewImage && item.driveLink && item.driveLink.includes("drive.google.com")) {
-                        const match = item.driveLink.match(/\/d\/([a-zA-Z0-9_-]+)/);
-                        if (match) {
-                            previewImage = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
-                        }
+
+                  // Extract YouTube ID from second link (thumbnailLink) or primary link (driveLink)
+                  const ytIdFromSecond = getYouTubeId(item.thumbnailLink);
+                  const ytIdFromPrimary = getYouTubeId(item.driveLink);
+                  const youtubeId = ytIdFromSecond || ytIdFromPrimary;
+                  const isShort = isYouTubeShort(item.thumbnailLink) || isYouTubeShort(item.driveLink);
+
+                  let previewImage = item.thumbnail?.asset?.url;
+                  if (!previewImage) {
+                    if (youtubeId) {
+                      previewImage = getYouTubeThumbnail(youtubeId, true);
+                    } else if (item.thumbnailLink && !item.thumbnailLink.includes("youtube.com") && !item.thumbnailLink.includes("youtu.be")) {
+                      previewImage = item.thumbnailLink;
+                    } else if (item.driveLink && item.driveLink.includes("drive.google.com")) {
+                      const match = item.driveLink.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                      if (match) {
+                        previewImage = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+                      }
                     }
+                  }
+
                   const downloadUrl = item.driveLink || (item.thumbnail?.asset?.url ? (item.thumbnail.asset.url + "?dl=") : "#");
 
                   return (
@@ -378,31 +393,58 @@ export default function DashboardClient({
                           {(() => {
                             const isPlaying = playingReels[item._id];
 
-                            if (item.assetType === "reel" && item.driveLink) {
-                                // If they provided a thumbnail, use the click-to-play overlay
-                                if (previewImage && !isPlaying) {
-                                  return (
-                                    <div 
-                                      className="w-full relative cursor-pointer flex flex-col items-center justify-center bg-zinc-950 overflow-hidden"
-                                      onClick={() => setPlayingReels(prev => ({ ...prev, [item._id]: true }))}
-                                    >
-                                      <img src={previewImage} alt="Thumbnail" className="w-full h-auto object-contain transition-opacity hover:opacity-80 opacity-90" />
-                                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                        <div className="bg-brand-green text-black rounded-full p-4 transform scale-100 transition-transform shadow-[0_0_30px_rgba(34,197,94,0.4)] flex items-center justify-center group-hover/preview:scale-110">
-                                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                                        </div>
+                            if (item.assetType === "reel" && (youtubeId || item.driveLink)) {
+                              // If they provided a thumbnail (or YouTube thumbnail), use the click-to-play overlay
+                              if (previewImage && !isPlaying) {
+                                return (
+                                  <div 
+                                    className="w-full relative cursor-pointer flex flex-col items-center justify-center bg-zinc-950 overflow-hidden"
+                                    onClick={() => setPlayingReels(prev => ({ ...prev, [item._id]: true }))}
+                                  >
+                                    <img 
+                                      src={previewImage} 
+                                      alt="Thumbnail" 
+                                      onError={(e) => {
+                                        if (youtubeId && !e.currentTarget.src.includes("hqdefault.jpg")) {
+                                          e.currentTarget.src = getYouTubeThumbnail(youtubeId, false);
+                                        }
+                                      }}
+                                      className="w-full h-auto object-contain transition-opacity hover:opacity-80 opacity-90" 
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                      <div className="bg-brand-green text-black rounded-full p-4 transform scale-100 transition-transform shadow-[0_0_30px_rgba(34,197,94,0.4)] flex items-center justify-center group-hover/preview:scale-110">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                                       </div>
                                     </div>
-                                  );
-                                }
+                                    {youtubeId && (
+                                      <div className="absolute bottom-3 right-3 bg-red-600/90 text-white text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded font-bold pointer-events-none shadow-md">
+                                        YouTube HD
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              }
 
-                              const isDrive = item.driveLink.includes("drive.google.com");
+                              // When playing, prioritize YouTube if provided (super smooth, no drive lag!)
+                              if (youtubeId) {
+                                return (
+                                  <iframe 
+                                    src={getYouTubeEmbedUrl(youtubeId)}
+                                    title="YouTube Video Player"
+                                    className={`w-full ${isShort ? "aspect-[9/16] max-h-[75vh]" : "aspect-video"} border-none`}
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowFullScreen 
+                                  />
+                                );
+                              }
+
+                              const isDrive = item.driveLink && item.driveLink.includes("drive.google.com");
                               if (isDrive) {
                                 const embedUrl = item.driveLink.replace(/\/view(\?.*)?$/, "/preview");
                                 return (
                                   <iframe src={embedUrl} className="w-full aspect-square md:aspect-video border-none max-h-[70vh]" allow="autoplay" allowFullScreen />
                                 );
-                              } else if (item.driveLink.endsWith(".mp4") || item.driveLink.includes("mixkit") || item.driveLink.endsWith(".webm") || item.driveLink.endsWith(".webp")) {
+                              } else if (item.driveLink && (item.driveLink.endsWith(".mp4") || item.driveLink.includes("mixkit") || item.driveLink.endsWith(".webm") || item.driveLink.endsWith(".webp"))) {
                                 return (
                                   <video src={item.driveLink} autoPlay controls className="w-full h-auto max-h-[80vh] object-contain" />
                                 );

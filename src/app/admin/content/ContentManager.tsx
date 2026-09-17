@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ClientDoc, ContentItem } from "@/lib/sanity";
 import { upsertContentItem, deleteContentItem } from "@/app/actions/adminContent";
+import { getYouTubeId, getYouTubeThumbnail } from "@/lib/youtube";
 import { Plus, Edit2, Trash2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
@@ -140,21 +141,41 @@ export default function ContentManager({
         {filteredContent.map(item => (
           <div key={item._id} className="bg-zinc-900 border border-zinc-800 flex flex-col">
             <div className="aspect-video w-full bg-zinc-950 border-b border-zinc-800 relative">
-              {(item.thumbnail?.asset?.url || item.thumbnailLink) ? (
-                  <img 
-                    src={item.thumbnail?.asset?.url || item.thumbnailLink} 
-                    alt="Thumb" 
-                    className="w-full h-full object-cover" 
-                  />
-                ) : item.assetType === "reel" && item.driveLink ? (
-                  <div className="w-full h-full flex items-center justify-center bg-zinc-900">
-                     <span className="text-zinc-600 font-mono text-[10px] tracking-widest uppercase border border-zinc-800 px-3 py-1">Video Link (No Thumb)</span>
-                  </div>
-                ) : (
+              {(() => {
+                const ytId = getYouTubeId(item.thumbnailLink) || getYouTubeId(item.driveLink);
+                const thumbUrl = item.thumbnail?.asset?.url || (ytId ? getYouTubeThumbnail(ytId, false) : (item.thumbnailLink && !item.thumbnailLink.includes("youtube.com") && !item.thumbnailLink.includes("youtu.be") ? item.thumbnailLink : null));
+                
+                if (thumbUrl) {
+                  return (
+                    <>
+                      <img 
+                        src={thumbUrl} 
+                        alt="Thumb" 
+                        className="w-full h-full object-cover" 
+                      />
+                      {ytId && (
+                        <div className="absolute bottom-2 left-2 bg-red-600 text-white px-1.5 py-0.5 text-[9px] font-mono uppercase font-bold rounded shadow">
+                          YouTube HD
+                        </div>
+                      )}
+                    </>
+                  );
+                }
+                
+                if (item.assetType === "reel" && item.driveLink) {
+                  return (
+                    <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                       <span className="text-zinc-600 font-mono text-[10px] tracking-widest uppercase border border-zinc-800 px-3 py-1">Video Link (No Thumb)</span>
+                    </div>
+                  );
+                }
+
+                return (
                   <div className="w-full h-full flex items-center justify-center text-zinc-700 font-mono text-xs uppercase tracking-widest">
                     No Preview
                   </div>
-                )}
+                );
+              })()}
               <div className="absolute top-2 right-2 bg-black px-2 py-1 text-[10px] font-mono uppercase border border-zinc-800">
                 {item.assetType}
               </div>
@@ -248,8 +269,9 @@ export default function ContentManager({
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-mono uppercase text-zinc-400">Or External Thumbnail Link (Fallback)</label>
-                <input name="thumbnailLink" type="url" defaultValue={editingItem?.thumbnailLink} className="w-full bg-zinc-900 border border-zinc-800 p-3 sm:p-2 font-sans text-base sm:text-sm text-white" placeholder="https://..." />
+                <label className="text-xs font-mono uppercase text-zinc-400">Video Stream Link (YouTube) or External Thumbnail</label>
+                <input name="thumbnailLink" type="url" defaultValue={editingItem?.thumbnailLink} className="w-full bg-zinc-900 border border-zinc-800 p-3 sm:p-2 font-sans text-base sm:text-sm text-white" placeholder="https://www.youtube.com/watch?v=... or image URL" />
+                <p className="text-[11px] font-sans text-zinc-500">Paste YouTube link here for smooth streaming playback. Download button will use Google Drive.</p>
               </div>
 
               <div className="space-y-1">
